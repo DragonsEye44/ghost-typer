@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 // The starter paragraph. Later, we can pull random phrases from an API or database.
 const TARGET_TEXT = "the quick brown fox jumps over the lazy dog because typing fast feels incredibly satisfying when you never make mistakes.";
