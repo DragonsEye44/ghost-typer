@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 
-// Sample paragraph array for potential scaling
 const TEXT_BANKS = [
   "the swift cyan cursor glides across the deep obsidian interface as ghost typing systems mask your true keystrokes into perfect professional production strings without latency."
 ];
@@ -64,7 +63,6 @@ export default function App() {
       e.preventDefault();
       setIsTypingActive(true);
 
-      // Audio Synthesis Simulation Engine
       if (soundProfile !== 'none') {
         simulateAudioFeedback(e.key === targetText[currentIndex]);
       }
@@ -102,59 +100,4 @@ export default function App() {
       gain.connect(ctx.destination);
 
       if (soundProfile === 'mx-brown') {
-        osc.type = isCorrect ? 'triangle' : 'sawtooth';
-        osc.frequency.setValueAtTime(isCorrect ? 120 : 75, ctx.currentTime);
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
-      } else { // Deep Thock profile
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(isCorrect ? 90 : 60, ctx.currentTime);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      }
-
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.04);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.04);
-    } catch (err) {
-      // Audio fallback catch block
-    }
-  };
-
-  // --- ANALYTICS MATRIX SYSTEM ---
-  const calculateComprehensiveMetrics = () => {
-    if (!startTime) return;
-    const totalMinutes = (Date.now() - startTime) / 1000 / 60;
-    
-    const calculatedWpm = Math.round((targetText.length / 5) / totalMinutes);
-    setFinalWpm(calculatedWpm);
-
-    const totalKeys = targetText.length;
-    const adjustedAccuracy = Math.max(
-      92,
-      Math.round(((totalKeys - (actualMistakes * 0.2)) / totalKeys) * 100)
-    );
-    setFinalAccuracy(adjustedAccuracy);
-
-    // Dynamic processing profiles for premium performance distribution
-    setBurstSpeed(Math.round(calculatedWpm * 1.22));
-    setConsistencyScore(Math.max(88, Math.round(100 - (actualMistakes * 1.4))));
-  };
-
-  // --- RECOVERY RESET ROUTINE ---
-  const resetEngine = () => {
-    setCurrentIndex(0);
-    setActualMistakes(0);
-    setStartTime(null);
-    setWpmTimeline([]);
-    setIsFinished(false);
-    setIsTypingActive(false);
-    setFinalWpm(0);
-    setFinalAccuracy(100);
-  };
-
-  // --- FILE STORAGE INTERACTION ---
-  const handleLocalImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
+        osc.type = isCorrect ? 'triangle' : '
