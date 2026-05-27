@@ -1,16 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// --- SYSTEM WORD BANKS & TELEMETRY DICTIONARIES ---
-const TEXT_BANKS = [
-  "the swift cyan cursor glides across the deep obsidian interface as ghost typing systems mask your true keystrokes into perfect professional production strings without latency.",
-  "dragon inc technology solutions provide ultra low latency processing pipelines for scale distributed application layers worldwide.",
-  "minimalist design choices combined with deep performance optimization vectors yield highly scalable micro frontend ecosystems.",
-  "continuous deployment pipelines deliver synchronized builds across cloud environments automatically tracking repository state changes."
-];
-
-const COMMON_WORDS = [
-  "the", "be", "of", "and", "a", "to", "in", "he", "have", "it", "that", "for", "they", "with", "as", "not", "on", "she", "at", "by", "this", "we", "you", "do", "but", "from", "or", "which", "one", "would", "all", "will", "there", "say", "who", "make", "when", "can", "more", "if", "no", "man", "out", "other", "so", "what", "time", "up", "go", "about", "than", "into", "could", "state", "only", "new", "year", "some", "take", "come", "these", "know", "see", "use", "get", "like", "then", "first", "any", "work", "now", "may", "such", "give", "over", "think", "most", "even", "find", "day", "also", "after", "way", "many", "must", "look", "before", "great", "back", "through", "long", "where", "much", "should", "well", "people", "down", "own", "just", "because", "good", "each", "those", "feel", "seem", "how", "high", "too", "place", "little", "world", "very", "still", "nation", "hand", "old", "life", "tell", "write", "become", "here", "show", "house", "both", "between", "need", "mean", "call", "develop", "under", "last", "right", "move", "thing", "general", "school", "never", "same", "another", "begin", "while", "number", "part", "turn", "real", "leave", "might", "want", "point", "form", "off", "child", "few", "small", "since", "against", "ask", "late", "home", "interest", "large", "person", "end", "open", "public", "follow", "during", "present", "without", "again", "hold", "govern", "around", "possible", "head", "consider", "word", "program", "problem", "however", "lead", "system", "set", "order", "eye", "plan", "run", "keep", "face", "fact", "group", "play", "stand", "increase", "early", "course", "change", "help", "line"
-];
+// --- SYSTEM WORD BANKS & TELEMETRY DICTIONARIES (SIMPLE VOCABULARY) ---
+const DICTIONARIES: Record<string, string[]> = {
+  en: ["the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take", "people", "into", "year", "your", "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", "its", "over", "think", "also"],
+  es: ["el", "la", "de", "que", "y", "a", "en", "un", "ser", "se", "no", "haber", "por", "con", "su", "para", "como", "estar", "tener", "le", "lo", "todo", "pero", "más", "hacer", "o", "poder", "decir", "este", "ir", "otro", "ese", "si", "me", "ya", "ver", "porque", "dar", "cuando", "él", "muy", "sin", "vez", "mucho", "saber", "qué", "sobre", "mi", "alguno", "mismo", "yo", "también", "hasta", "año", "dos", "querer", "entre", "así", "primero", "desde", "grande", "eso", "ni", "nos", "llegar", "pasar", "tiempo", "ella", "sí", "día", "uno", "bien", "poco", "deber", "entonces", "poner", "cosa", "tanto", "hombre", "parecer", "nuestro", "tan", "donde", "ahora", "parte", "después", "vida", "quedar", "siempre", "creer", "hablar", "llevar", "dejar", "nada", "cada", "seguir", "menos", "nuevo", "encontrar"],
+  de: ["der", "die", "und", "in", "den", "von", "zu", "das", "mit", "sich", "des", "auf", "für", "ist", "im", "dem", "nicht", "ein", "eine", "als", "auch", "es", "an", "werden", "aus", "er", "hat", "dass", "sie", "nach", "wird", "bei", "einer", "um", "am", "sind", "noch", "wie", "einem", "über", "einen", "so", "zum", "war", "haben", "nur", "oder", "aber", "vor", "zur", "bis", "mehr", "durch", "man", "sein", "wurde", "sei", "kann", "gegen", "vom", "können", "schon", "wenn", "habe", "seine", "ihre", "dann", "unter", "wir", "soll", "ich", "eines", "Jahr", "zwei", "diese", "dieser", "wieder", "keine", "Uhr", "seiner", "worden", "will", "zwischen", "immer", "was", "sagte", "gibt", "alle"],
+  fr: ["le", "la", "de", "et", "les", "des", "en", "un", "une", "que", "est", "il", "pour", "qui", "dans", "a", "par", "plus", "pas", "au", "sur", "ne", "se", "ce", "sont", "cas", "pouvoir", "faire", "lui", "être", "ou", "comme", "avec", "tout", "son", "sa", "fait", "nous", "mais", "ils", "aux", "même", "si", "bien", "elle", "on", "peut", "ces", "deux", "avoir", "cette", "aussi", "été", "dont", "sans", "je", "leur", "très", "où", "temps", "cela", "part", "autre", "après", "ans", "toujours", "dire", "reste", "sous", "voir", "donc", "moins", "avant", "encore", "mon", "rien", "quelques", "ceux", "était", "tous", "alors", "jour", "homme", "vie", "quand", "oui", "déjà", "bon", "nouveau"]
+};
 
 interface HistoryLog {
   id: string;
@@ -18,11 +14,12 @@ interface HistoryLog {
   accuracy: number;
   mode: string;
   date: string;
+  errors: number;
 }
 
 export default function App() {
   // --- CORE ENGINE STATE ---
-  const [targetText, setTargetText] = useState<string>(TEXT_BANKS[0]);
+  const [targetText, setTargetText] = useState<string>("loading system configuration...");
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [actualMistakes, setActualMistakes] = useState<number>(0);
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -39,13 +36,16 @@ export default function App() {
   const [soundProfile, setSoundProfile] = useState<'none' | 'mx-brown' | 'thock' | 'clicky'>('mx-brown');
   const [textSize, setTextSize] = useState<'text-xl' | 'text-2xl' | 'text-3xl'>('text-2xl');
   const [showLiveStats, setShowLiveStats] = useState<boolean>(true);
-
-  // --- MONKEYTYPE EXTENDED PARAMETERS ---
+  const [fontFamily, setFontFamily] = useState<'font-mono' | 'font-sans' | 'font-serif'>('font-mono');
+  
+  // --- EXPANDED MULTI-MODAL LOGIC ---
+  const [textSource, setTextSource] = useState<'random' | 'coherent' | 'custom'>('random');
+  const [language, setLanguage] = useState<'en' | 'es' | 'de' | 'fr'>('en');
   const [testMode, setTestMode] = useState<'time' | 'words' | 'custom'>('time');
   const [timeLimit, setTimeLimit] = useState<number>(30);
   const [wordLimit, setWordLimit] = useState<number>(25);
   const [timeLeft, setTimeLeft] = useState<number>(30);
-  const [themeMode, setThemeMode] = useState<'obsidian' | 'bright'>('bright');
+  const [themeMode, setThemeMode] = useState<'obsidian' | 'bright' | 'neon' | 'midnight'>('bright');
   const [customInputText, setCustomInputText] = useState<string>("");
   const [history, setHistory] = useState<HistoryLog[]>([]);
   const [rawInputBuffer, setRawInputBuffer] = useState<string>("");
@@ -56,13 +56,14 @@ export default function App() {
   const [consistencyScore, setConsistencyScore] = useState<number>(95);
   const [burstSpeed, setBurstSpeed] = useState<number>(0);
   const [rawWpmScore, setRawWpmScore] = useState<number>(0);
+  const [finalErrorsLog, setFinalErrorsLog] = useState<number>(0);
 
-  // --- UNUSED REF ERROR FIXED AND GUARANTEED TO EVALUATE ---
   const timelineInterval = useRef<any>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   // --- PERSISTENT HISTORY LOADER ---
   useEffect(() => {
-    const saved = localStorage.getItem('dragon_type_history');
+    const saved = localStorage.getItem('dragon_type_history_v5');
     if (saved) {
       try { setHistory(JSON.parse(saved)); } catch (e) { console.error(e); }
     }
@@ -108,58 +109,67 @@ export default function App() {
     };
   }, [startTime, isFinished, currentIndex, isTypingActive]);
 
-  // --- METRICS CALCULATION METHOD ---
+  // --- METRICS CALCULATION METHOD (UPDATED FOR GHOST ENGINE) ---
   const calculateComprehensiveMetrics = useCallback((overrideEndTime?: number) => {
     if (!startTime) return;
     const finalTime = overrideEndTime || Date.now();
     const totalMinutes = (finalTime - startTime) / 1000 / 60;
     
-    // Calculate Correct Characters vs Errors
-    let correctChars = 0;
-    for (let i = 0; i < rawInputBuffer.length; i++) {
-      if (rawInputBuffer[i] === targetText[i]) {
-        correctChars++;
-      }
-    }
+    // In Ghost Mode, rawInputBuffer is always identical to the target text for length.
+    // So we use the actual length typed and subtract the hidden mistakes to find real correct keystrokes.
+    const totalTypedLength = rawInputBuffer.length;
+    const realCorrectChars = Math.max(0, totalTypedLength - actualMistakes);
 
-    const calculatedWpm = Math.max(0, Math.round((correctChars / 5) / (totalMinutes || 0.01)));
-    const calculatedRawWpm = Math.max(0, Math.round((rawInputBuffer.length / 5) / (totalMinutes || 0.01)));
+    const calculatedWpm = Math.max(0, Math.round((realCorrectChars / 5) / (totalMinutes || 0.01)));
+    const calculatedRawWpm = Math.max(0, Math.round((totalTypedLength / 5) / (totalMinutes || 0.01)));
     
     setFinalWpm(calculatedWpm);
     setRawWpmScore(calculatedRawWpm);
+    setFinalErrorsLog(actualMistakes);
 
-    const totalKeys = rawInputBuffer.length || 1;
-    const adjustedAccuracy = Math.min(100, Math.max(0, Math.round((correctChars / totalKeys) * 100)));
+    const totalKeys = totalTypedLength || 1;
+    const adjustedAccuracy = Math.min(100, Math.max(0, Math.round((realCorrectChars / totalKeys) * 100)));
     setFinalAccuracy(adjustedAccuracy);
 
     setBurstSpeed(Math.round(calculatedWpm * 1.25));
-    setConsistencyScore(Math.max(50, Math.round(100 - (actualMistakes * 1.1))));
+    setConsistencyScore(Math.max(10, Math.round(100 - (actualMistakes * 1.5))));
 
-    // Save to state history stack and local storage
     const matchLog: HistoryLog = {
       id: Math.random().toString(36).substring(2, 9),
       wpm: calculatedWpm,
       accuracy: adjustedAccuracy,
-      mode: testMode.toUpperCase(),
+      errors: actualMistakes,
+      mode: `${testMode.toUpperCase()} (${textSource})`,
       date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setHistory(prev => {
       const updated = [matchLog, ...prev].slice(0, 50);
-      localStorage.setItem('dragon_type_history', JSON.stringify(updated));
+      localStorage.setItem('dragon_type_history_v5', JSON.stringify(updated));
       return updated;
     });
-  }, [startTime, rawInputBuffer, targetText, actualMistakes, testMode]);
+  }, [startTime, rawInputBuffer, actualMistakes, testMode, textSource]);
 
-  // --- SEPARATED COMPLETION ROUTINE ---
   const triggerTestCompletion = useCallback(() => {
     setIsFinished(true);
     setIsTypingActive(false);
     calculateComprehensiveMetrics();
   }, [calculateComprehensiveMetrics]);
 
+  // --- INTERNET API FETCH FOR COHERENT TEXT ---
+  const fetchCoherentQuote = async () => {
+    try {
+      const res = await fetch('https://dummyjson.com/quotes/random');
+      const data = await res.json();
+      // Clean quote to simple lowercase letters and spaces
+      return data.quote.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+    } catch (e) {
+      return "the system failed to connect to the internet so this fallback simple english phrase was deployed instead";
+    }
+  };
+
   // --- RECOVERY RESET ROUTINE ---
-  const resetEngine = useCallback(() => {
+  const resetEngine = useCallback(async () => {
     setCurrentIndex(0);
     setActualMistakes(0);
     setStartTime(null);
@@ -171,35 +181,42 @@ export default function App() {
     setFinalAccuracy(100);
     setRawWpmScore(0);
     setBurstSpeed(0);
+    setFinalErrorsLog(0);
 
-    if (testMode === 'time') {
-      setTimeLeft(timeLimit);
-      // Generate randomized word block sequence
-      const block = Array.from({ length: 150 })
-        .map(() => COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)])
-        .join(' ');
-      setTargetText(block);
-    } else if (testMode === 'words') {
-      setTimeLeft(0);
-      const block = Array.from({ length: wordLimit })
-        .map(() => COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)])
-        .join(' ');
-      setTargetText(block);
+    const wordsBank = DICTIONARIES[language] || DICTIONARIES['en'];
+
+    if (textSource === 'coherent') {
+      setTargetText("connecting to internet database...");
+      const internetText = await fetchCoherentQuote();
+      setTargetText(internetText);
+      setTimeLeft(testMode === 'time' ? timeLimit : 0);
+    } else if (textSource === 'random') {
+      if (testMode === 'time') {
+        setTimeLeft(timeLimit);
+        const block = Array.from({ length: 200 })
+          .map(() => wordsBank[Math.floor(Math.random() * wordsBank.length)])
+          .join(' ');
+        setTargetText(block);
+      } else if (testMode === 'words') {
+        setTimeLeft(0);
+        const block = Array.from({ length: wordLimit })
+          .map(() => wordsBank[Math.floor(Math.random() * wordsBank.length)])
+          .join(' ');
+        setTargetText(block);
+      }
     } else {
       setTimeLeft(0);
-      setTargetText(customInputText.trim() || TEXT_BANKS[0]);
+      setTargetText(customInputText.trim() || "please insert your custom text into the configuration matrix");
     }
-  }, [testMode, timeLimit, wordLimit, customInputText]);
+  }, [testMode, timeLimit, wordLimit, customInputText, language, textSource]);
 
-  // Initialize loop hook
   useEffect(() => {
     resetEngine();
-  }, [resetEngine, testMode, timeLimit, wordLimit]);
+  }, [resetEngine, testMode, timeLimit, wordLimit, language, textSource]);
 
-  // --- KEYBOARD CAPTURE HOOK ---
+  // --- KEYBOARD CAPTURE HOOK (WITH GHOST AUTO-CORRECT ENGINE) ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Direct escape code catcher
       if (e.key === 'Escape') {
         resetEngine();
         return;
@@ -207,7 +224,6 @@ export default function App() {
 
       if (isFinished || activeTab !== 'none') return;
 
-      // Backspace Input Logic Protection
       if (e.key === 'Backspace') {
         e.preventDefault();
         if (currentIndex > 0) {
@@ -224,78 +240,102 @@ export default function App() {
       e.preventDefault();
       setIsTypingActive(true);
 
+      const targetChar = targetText[currentIndex];
+      const isActuallyCorrect = e.key === targetChar;
+
+      // Play sound before processing logical mask
       if (soundProfile !== 'none') {
-        simulateAudioFeedback(e.key === targetText[currentIndex]);
+        simulateAudioFeedback(true); // Always sounds correct in Ghost Mode!
       }
 
       if (!startTime) {
         setStartTime(Date.now());
       }
 
-      if (e.key !== targetText[currentIndex]) {
-        setActualMistakes(prev => prev + 1);
+      if (!isActuallyCorrect) {
+        setActualMistakes(prev => prev + 1); // Log the error silently
       }
 
+      // GHOST ENGINE: We force the output string to accept the CORRECT target character
+      // creating an illusion of perfect typing, while tracking the error behind the scenes.
+      const ghostForcedChar = targetChar;
+
       const nextIndex = currentIndex + 1;
-      const nextBuffer = rawInputBuffer + e.key;
+      const nextBuffer = rawInputBuffer + ghostForcedChar;
       
       setCurrentIndex(nextIndex);
       setRawInputBuffer(nextBuffer);
 
-      // Core engine boundary check formulas
       if (testMode === 'words' && nextIndex >= targetText.length) {
         setIsFinished(true);
         setIsTypingActive(false);
-        const finalTime = Date.now();
-        setTimeout(() => {
-          calculateComprehensiveMetrics(finalTime);
-        }, 10);
-      } else if (testMode === 'time' && nextIndex >= targetText.length) {
-        // Infinite generator expansion wrapper buffer
-        setTargetText(prev => prev + " " + COMMON_WORDS[Math.floor(Math.random() * COMMON_WORDS.length)]);
-      } else if (testMode === 'custom' && nextIndex >= targetText.length) {
+        setTimeout(() => calculateComprehensiveMetrics(Date.now()), 10);
+      } else if (testMode === 'time' && nextIndex >= targetText.length && textSource === 'random') {
+        const wordsBank = DICTIONARIES[language];
+        setTargetText(prev => prev + " " + wordsBank[Math.floor(Math.random() * wordsBank.length)]);
+      } else if ((testMode === 'custom' || textSource === 'coherent') && nextIndex >= targetText.length) {
         setIsFinished(true);
         setIsTypingActive(false);
-        const finalTime = Date.now();
-        setTimeout(() => {
-          calculateComprehensiveMetrics(finalTime);
-        }, 10);
+        setTimeout(() => calculateComprehensiveMetrics(Date.now()), 10);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, startTime, isFinished, actualMistakes, activeTab, soundProfile, targetText, rawInputBuffer, testMode, calculateComprehensiveMetrics, resetEngine]);
+  }, [currentIndex, startTime, isFinished, activeTab, soundProfile, targetText, rawInputBuffer, testMode, language, textSource, calculateComprehensiveMetrics, resetEngine]);
 
-  // --- AUDIO SYNTHESIZER SIMULATOR ---
-  const simulateAudioFeedback = (isCorrect: boolean) => {
+  // --- AUDIO SYNTHESIZER SIMULATOR (FIXED) ---
+  const initAudioCtx = () => {
+    if (!audioCtxRef.current) {
+      const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+      audioCtxRef.current = new AudioContextCtor();
+    }
+    if (audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
+  };
+
+  const simulateAudioFeedback = (isCorrect: boolean, overrideProfile?: string) => {
+    initAudioCtx();
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+
+    const profile = overrideProfile || soundProfile;
+    if (profile === 'none') return;
+
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      if (soundProfile === 'mx-brown') {
-        osc.type = isCorrect ? 'triangle' : 'sawtooth';
-        osc.frequency.setValueAtTime(isCorrect ? 130 : 75, ctx.currentTime);
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
-      } else if (soundProfile === 'thock') {
+      const now = ctx.currentTime;
+
+      if (profile === 'mx-brown') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(isCorrect ? 95 : 62, ctx.currentTime);
-        gain.gain.setValueAtTime(0.18, ctx.currentTime);
-      } else if (soundProfile === 'clicky') {
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      } else if (profile === 'thock') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.08);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      } else if (profile === 'clicky') {
         osc.type = 'square';
-        osc.frequency.setValueAtTime(isCorrect ? 800 : 150, ctx.currentTime);
-        gain.gain.setValueAtTime(0.03, ctx.currentTime);
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.03);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
       }
 
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.03);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.03);
+      osc.start(now);
+      osc.stop(now + 0.1);
     } catch (err) {
-      // Audio engine channel bypass
+      console.error("Audio block bypassed");
     }
   };
 
@@ -305,253 +345,237 @@ export default function App() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
-          setBgImage(event.target.result as string);
-        }
+        if (event.target?.result) setBgImage(event.target.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // --- CALCULATE LIVE WPM FOR HUD ---
   const getLiveWpm = () => {
     if (!startTime) return 0;
     const elapsed = (Date.now() - startTime) / 1000 / 60;
     return elapsed > 0 ? Math.round((currentIndex / 5) / elapsed) : 0;
   };
 
-  // Clear tracking list function
   const clearMetricsLog = () => {
-    localStorage.removeItem('dragon_type_history');
+    localStorage.removeItem('dragon_type_history_v5');
     setHistory([]);
   };
 
-  // Ensure timelines don't break compilation errors by running validation test expression
-  const checkTimelineReference = () => {
-    return !!timelineInterval.current;
+  // --- THEME ENGINE STYLING DICTIONARY ---
+  const getThemeClasses = () => {
+    switch(themeMode) {
+      case 'bright': return { bg: 'bg-[#f8fafc]', text: 'text-[#334155]', border: 'border-slate-200', panel: 'bg-white', accent: 'text-amber-500', caret: 'bg-amber-500' };
+      case 'neon': return { bg: 'bg-[#000000]', text: 'text-green-400', border: 'border-green-900', panel: 'bg-black', accent: 'text-green-400', caret: 'bg-green-400' };
+      case 'midnight': return { bg: 'bg-[#0f0c29]', text: 'text-purple-200', border: 'border-purple-900/50', panel: 'bg-[#302b63]/40', accent: 'text-purple-400', caret: 'bg-purple-400' };
+      case 'obsidian': 
+      default: return { bg: 'bg-[#0a0f1d]', text: 'text-[#e2e8f0]', border: 'border-blue-900/40', panel: 'bg-[#111a2e]/95', accent: 'text-cyan-400', caret: 'bg-cyan-400' };
+    }
   };
+  const T = getThemeClasses();
 
   return (
-    <div className={`relative min-h-screen font-mono flex flex-col items-center justify-between p-6 select-none overflow-x-hidden transition-colors duration-300 ${themeMode === 'bright' ? 'bg-[#f8fafc] text-[#334155]' : 'bg-[#0a0f1d] text-[#e2e8f0]'}`}>
+    <div className={`relative min-h-screen ${fontFamily} flex flex-col items-center justify-between p-6 select-none overflow-x-hidden transition-colors duration-300 ${T.bg} ${T.text}`}>
       
       {/* 1. DYNAMIC BACKGROUND IMAGE ENGINE */}
       {bgImage && (
         <div 
           className="absolute inset-0 pointer-events-none transition-all duration-300"
-          style={{
-            backgroundImage: `url(${bgImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: `${bgOpacity / 100}`,
-            filter: `blur(${bgBlur}px)`,
-            zIndex: 0
-          }}
+          style={{ backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: `${bgOpacity / 100}`, filter: `blur(${bgBlur}px)`, zIndex: 0 }}
         />
       )}
 
       {/* 2. TOP HEADS UP SYSTEM CONTROL BANNER */}
       <nav className={`w-full max-w-5xl flex flex-col md:flex-row gap-4 justify-between items-center text-xs tracking-widest uppercase transition-all duration-500 z-10 ${isTypingActive ? 'opacity-0 transform -translate-y-4 pointer-events-none' : 'opacity-100'}`}>
-        <div className={`flex flex-wrap gap-4 border-b pb-2 ${themeMode === 'bright' ? 'border-slate-200' : 'border-blue-950/40'}`}>
-          <button 
-            onClick={() => setActiveTab(activeTab === 'settings' ? 'none' : 'settings')}
-            className={`cursor-pointer font-bold transition-colors ${activeTab === 'settings' ? 'text-amber-500' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            ⚙️ Configuration
-          </button>
-          <button 
-            onClick={() => setActiveTab(activeTab === 'history' ? 'none' : 'history')}
-            className={`cursor-pointer font-bold transition-colors ${activeTab === 'history' ? 'text-amber-500' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            📊 Log History ({history.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab(activeTab === 'credits' ? 'none' : 'credits')}
-            className={`cursor-pointer font-bold transition-colors ${activeTab === 'credits' ? 'text-amber-500' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            📋 Specifications
-          </button>
-          <button 
-            onClick={() => setActiveTab(activeTab === 'copyright' ? 'none' : 'copyright')}
-            className={`cursor-pointer font-bold transition-colors ${activeTab === 'copyright' ? 'text-amber-500' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            © Dragon Inc. Legal
-          </button>
+        <div className={`flex flex-wrap gap-4 border-b pb-2 ${T.border}`}>
+          {['settings', 'history', 'credits', 'copyright'].map((tab) => (
+            <button 
+              key={tab}
+              onClick={() => setActiveTab(activeTab === tab ? 'none' : tab as any)}
+              className={`cursor-pointer font-bold transition-colors ${activeTab === tab ? T.accent : 'opacity-60 hover:opacity-100'}`}
+            >
+              {tab === 'settings' ? '⚙️ Config' : tab === 'history' ? `📊 Logs (${history.length})` : tab === 'credits' ? '📋 Specs' : '© Legal'}
+            </button>
+          ))}
         </div>
 
-        {/* BRIGHTNESS CONTROL UNIT */}
         <div className="flex items-center gap-3">
-          <div className={`flex items-center rounded-lg p-1 border ${themeMode === 'bright' ? 'bg-slate-100 border-slate-300' : 'bg-slate-900 border-slate-800'}`}>
-            <button 
-              onClick={() => setThemeMode('bright')} 
-              className={`px-3 py-1 rounded-md text-[10px] font-bold tracking-tight transition-all ${themeMode === 'bright' ? 'bg-white text-amber-600 shadow-sm' : 'text-slate-400'}`}
-            >
-              ☀️ Bright Standard
-            </button>
-            <button 
-              onClick={() => setThemeMode('obsidian')} 
-              className={`px-3 py-1 rounded-md text-[10px] font-bold tracking-tight transition-all ${themeMode === 'obsidian' ? 'bg-slate-800 text-cyan-400 shadow-sm' : 'text-slate-500'}`}
-            >
-              🌙 Deep Obsidian
-            </button>
+          <div className={`flex items-center rounded-lg p-1 border ${T.border} bg-black/10`}>
+            {['bright', 'obsidian', 'neon', 'midnight'].map((tm) => (
+              <button 
+                key={tm}
+                onClick={() => setThemeMode(tm as any)} 
+                className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-tight transition-all ${themeMode === tm ? `bg-white/10 ${T.accent} shadow-sm` : 'opacity-50'}`}
+              >
+                {tm}
+              </button>
+            ))}
           </div>
-
-          <button 
-            onClick={resetEngine}
-            className={`text-[10px] px-3 py-1.5 rounded border transition-all font-bold cursor-pointer ${themeMode === 'bright' ? 'bg-slate-200 border-slate-300 text-slate-700 hover:bg-slate-300' : 'bg-[#111a2e]/80 border-blue-900/30 text-blue-300 hover:bg-[#1e2d4a]'}`}
-          >
-            Reset Engine [Esc]
+          <button onClick={resetEngine} className={`text-[10px] px-3 py-1.5 rounded border transition-all font-bold cursor-pointer ${T.border} bg-black/10 hover:bg-white/10`}>
+            Reset [Esc]
           </button>
         </div>
       </nav>
 
       {/* 3. DYNAMIC CONFIGURATION CONTROL SUBPANELS */}
       {activeTab !== 'none' && !isTypingActive && (
-        <div className={`w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-20 mt-4 max-h-[70vh] overflow-y-auto transition-all duration-300 ${themeMode === 'bright' ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#111a2e]/95 backdrop-blur-md border-blue-900/50 text-blue-100'}`}>
-          <div className={`flex justify-between items-center mb-4 border-b pb-2 ${themeMode === 'bright' ? 'border-slate-100' : 'border-slate-100'}`}>
-            <h3 className={`text-xs font-black uppercase tracking-widest ${themeMode === 'bright' ? 'text-amber-600' : 'text-cyan-400'}`}>{activeTab} array deployment console</h3>
-            <button onClick={() => setActiveTab('none')} className="text-xs font-bold hover:underline cursor-pointer">✕ System Close</button>
+        <div className={`w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-20 mt-4 max-h-[70vh] overflow-y-auto transition-all duration-300 ${T.panel} ${T.border}`}>
+          <div className={`flex justify-between items-center mb-4 border-b pb-2 ${T.border}`}>
+            <h3 className={`text-xs font-black uppercase tracking-widest ${T.accent}`}>{activeTab} Deployment Console</h3>
+            <button onClick={() => setActiveTab('none')} className="text-xs font-bold hover:underline cursor-pointer">✕ Close</button>
           </div>
 
           {activeTab === 'settings' && (
             <div className="space-y-6 text-xs">
               
-              {/* MONKEYTYPE TEST MODE SELECTOR GRID */}
-              <div className={`p-4 rounded-xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/60 border-blue-950'}`}>
-                <span className={`block font-black uppercase mb-3 tracking-wider ${themeMode === 'bright' ? 'text-slate-700' : 'text-cyan-400'}`}>🎯 Operational Test Evaluation Mode</span>
+              {/* TEXT SOURCE AND LANGUAGE GRID */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🌍 Text Generation Source</span>
+                  <div className="flex gap-2">
+                    {['random', 'coherent', 'custom'].map((src) => (
+                      <button
+                        key={src}
+                        onClick={() => setTextSource(src as any)}
+                        className={`flex-1 py-2 rounded-lg font-bold uppercase tracking-widest border transition-all ${textSource === src ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
+                      >
+                        {src}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🗣️ Vocabulary Language Engine</span>
+                  <div className="flex gap-2">
+                    {['en', 'es', 'de', 'fr'].map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => setLanguage(lang as any)}
+                        disabled={textSource === 'coherent' || textSource === 'custom'}
+                        className={`flex-1 py-2 rounded-lg font-bold uppercase tracking-widest border transition-all ${language === lang ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'} disabled:opacity-20 disabled:cursor-not-allowed`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* TEST MODE EVALUATION */}
+              <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🎯 Operational Test Mode</span>
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   {(['time', 'words', 'custom'] as const).map((m) => (
                     <button
                       key={m}
                       onClick={() => setTestMode(m)}
-                      className={`py-2 rounded-lg font-bold uppercase tracking-widest border transition-all ${testMode === m ? (themeMode === 'bright' ? 'bg-amber-500 border-amber-600 text-white' : 'bg-cyan-950/60 border-cyan-500 text-cyan-400') : 'bg-transparent border-slate-300 text-slate-400'}`}
+                      className={`py-2 rounded-lg font-bold uppercase tracking-widest border transition-all ${testMode === m ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
                     >
                       {m}
                     </button>
                   ))}
                 </div>
 
-                {testMode === 'time' && (
+                {testMode === 'time' && textSource !== 'coherent' && (
                   <div>
-                    <span className="block text-slate-400 font-bold uppercase mb-2">Duration Intervals (Seconds)</span>
+                    <span className="block opacity-60 font-bold uppercase mb-2">Duration Intervals (Seconds)</span>
                     <div className="flex gap-2">
                       {[15, 30, 60, 120].map((t) => (
-                        <button key={t} onClick={() => setTimeLimit(t)} className={`flex-1 py-1.5 rounded font-bold border ${timeLimit === t ? 'bg-slate-700 text-white' : 'bg-transparent text-slate-400'}`}>{t}s</button>
+                        <button key={t} onClick={() => setTimeLimit(t)} className={`flex-1 py-1.5 rounded font-bold border ${timeLimit === t ? 'bg-black/30' : 'bg-transparent opacity-50'}`}>{t}s</button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {testMode === 'words' && (
+                {testMode === 'words' && textSource !== 'coherent' && (
                   <div>
-                    <span className="block text-slate-400 font-bold uppercase mb-2">Quantized Word Targets</span>
+                    <span className="block opacity-60 font-bold uppercase mb-2">Quantized Word Targets</span>
                     <div className="flex gap-2">
                       {[10, 25, 50, 100].map((w) => (
-                        <button key={w} onClick={() => setWordLimit(w)} className={`flex-1 py-1.5 rounded font-bold border ${wordLimit === w ? 'bg-slate-700 text-white' : 'bg-transparent text-slate-400'}`}>{w}</button>
+                        <button key={w} onClick={() => setWordLimit(w)} className={`flex-1 py-1.5 rounded font-bold border ${wordLimit === w ? 'bg-black/30' : 'bg-transparent opacity-50'}`}>{w}</button>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {testMode === 'custom' && (
-                  <div className="space-y-2 animate-fadeIn">
-                    <span className="block text-slate-400 font-bold uppercase">Insert Payload Text Array</span>
+                {textSource === 'custom' && (
+                  <div className="space-y-2 mt-4">
+                    <span className="block opacity-60 font-bold uppercase">Insert Custom Payload Array</span>
                     <textarea
                       value={customInputText}
                       onChange={(e) => setCustomInputText(e.target.value)}
-                      placeholder="Type or paste custom language profiles directly into this terminal vector node..."
-                      className={`w-full h-24 p-3 font-mono text-xs rounded-xl border outline-none focus:ring-2 ${themeMode === 'bright' ? 'bg-white border-slate-300 text-slate-800 focus:ring-amber-400' : 'bg-[#0a0f1d] border-blue-950 text-cyan-300 focus:ring-cyan-500'}`}
+                      placeholder="Type or paste custom language profiles directly into this terminal..."
+                      className={`w-full h-24 p-3 ${fontFamily} text-xs rounded-xl border outline-none bg-black/10 ${T.border} ${T.accent}`}
                     />
-                    <button onClick={resetEngine} className="px-4 py-2 bg-slate-700 text-white font-bold rounded-lg hover:bg-slate-800">Lock and Apply Custom Text</button>
+                    <button onClick={resetEngine} className={`px-4 py-2 bg-black/20 font-bold rounded-lg ${T.border} hover:bg-black/40`}>Apply Custom Text</button>
                   </div>
                 )}
               </div>
 
-              {/* BACKGROUND PIPELINE CHASSIS */}
-              <div className={`p-4 rounded-xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/60 border-blue-950'}`}>
-                <label className="block text-slate-500 font-bold uppercase mb-2">🖼️ Local Core Image Layer Integration Pipeline</label>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleLocalImageUpload}
-                  className="w-full text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer"
-                />
-                {bgImage && (
-                  <div className="mt-4 grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-slate-400 mb-1">Opacity Metrics: {bgOpacity}%</label>
-                      <input type="range" min="5" max="90" value={bgOpacity} onChange={(e) => setBgOpacity(Number(e.target.value))} className="w-full accent-amber-500" />
-                    </div>
-                    <div>
-                      <label className="block text-slate-400 mb-1">Blur Pipeline Radius: {bgBlur}px</label>
-                      <input type="range" min="0" max="12" value={bgBlur} onChange={(e) => setBgBlur(Number(e.target.value))} className="w-full accent-amber-500" />
-                    </div>
-                    <button onClick={() => setBgImage(null)} className="col-span-2 text-left text-rose-500 hover:underline font-bold mt-1">Disconnect file array architecture</button>
-                  </div>
-                )}
-              </div>
-
-              {/* SYSTEM SOUNDS AND CARET MECHANICS GRID */}
+              {/* AESTHETICS & AUDIO GRID */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-4 rounded-xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/60 border-blue-950'}`}>
-                  <span className="block text-slate-500 font-bold uppercase mb-2">⚡ Caret Graphic Layout Node</span>
-                  <div className="flex gap-2">
-                    {['block', 'line', 'underline'].map((style) => (
-                      <button 
-                        key={style}
-                        onClick={() => setCaretStyle(style as any)}
-                        className={`flex-1 py-2 rounded-lg capitalize border font-bold ${caretStyle === style ? 'bg-slate-700 text-white border-slate-800' : 'bg-transparent text-slate-400 border-slate-300'}`}
-                      >
-                        {style}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={`p-4 rounded-xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/60 border-blue-950'}`}>
-                  <span className="block text-slate-500 font-bold uppercase mb-2">🔊 Acoustic Synthesizer Sound Driver</span>
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🔊 Acoustic Synth Driver (Click to Preview)</span>
                   <div className="flex gap-2">
                     {['none', 'mx-brown', 'thock', 'clicky'].map((sound) => (
                       <button 
                         key={sound}
-                        onClick={() => setSoundProfile(sound as any)}
-                        className={`flex-1 py-2 rounded-lg uppercase text-[10px] font-bold border ${soundProfile === sound ? 'bg-slate-700 text-white border-slate-800' : 'bg-transparent text-slate-400 border-slate-300'}`}
+                        onClick={() => { setSoundProfile(sound as any); simulateAudioFeedback(true, sound); }}
+                        className={`flex-1 py-2 rounded-lg uppercase text-[10px] font-bold border transition-all ${soundProfile === sound ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
                       >
                         {sound.replace('-', ' ')}
                       </button>
                     ))}
                   </div>
                 </div>
-              </div>
 
-              {/* TYPOGRAPHY SCALE UNITS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-4 rounded-xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/60 border-blue-950'}`}>
-                  <span className="block text-slate-500 font-bold uppercase mb-2">📏 Text Geometry Scalar Matrix</span>
-                  <div className="flex gap-2">
-                    {(['text-xl', 'text-2xl', 'text-3xl'] as const).map((size) => (
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>⚡ Caret & Typography Core</span>
+                  <div className="flex gap-2 mb-3">
+                    {['font-mono', 'font-sans', 'font-serif'].map((font) => (
                       <button 
-                        key={size}
-                        onClick={() => setTextSize(size)}
-                        className={`flex-1 py-2 rounded-lg font-bold border ${textSize === size ? 'bg-slate-700 text-white border-slate-800' : 'bg-transparent text-slate-400 border-slate-300'}`}
+                        key={font}
+                        onClick={() => setFontFamily(font as any)}
+                        className={`flex-1 py-1.5 rounded-lg border font-bold ${font} ${fontFamily === font ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
                       >
-                        {size === 'text-xl' ? 'Compact' : size === 'text-2xl' ? 'Standard' : 'Magnified'}
+                        {font.replace('font-', '')}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    {['block', 'line', 'underline'].map((style) => (
+                      <button 
+                        key={style}
+                        onClick={() => setCaretStyle(style as any)}
+                        className={`flex-1 py-1.5 rounded-lg border font-bold ${caretStyle === style ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
+                      >
+                        {style}
                       </button>
                     ))}
                   </div>
                 </div>
-
-                <div className={`p-4 rounded-xl border flex items-center justify-between ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/60 border-blue-950'}`}>
-                  <div>
-                    <span className="block text-slate-600 font-bold uppercase">📊 Heads Up Realtime Diagnostics telemetry</span>
-                    <span className="text-[10px] text-slate-400">Stream evaluations fluidly across standard terminal buffers</span>
+              </div>
+              
+              {/* BACKGROUND PIPELINE */}
+              <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                <label className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🖼️ Wallpaper Matrix Injector</label>
+                <input 
+                  type="file" accept="image/*" onChange={handleLocalImageUpload}
+                  className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-black/20 file:text-inherit hover:file:bg-black/40 cursor-pointer opacity-80"
+                />
+                {bgImage && (
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block opacity-60 mb-1">Opacity: {bgOpacity}%</label>
+                      <input type="range" min="5" max="90" value={bgOpacity} onChange={(e) => setBgOpacity(Number(e.target.value))} className="w-full accent-current" />
+                    </div>
+                    <div>
+                      <label className="block opacity-60 mb-1">Blur Radius: {bgBlur}px</label>
+                      <input type="range" min="0" max="12" value={bgBlur} onChange={(e) => setBgBlur(Number(e.target.value))} className="w-full accent-current" />
+                    </div>
+                    <button onClick={() => setBgImage(null)} className="col-span-2 text-left text-red-500 hover:underline font-bold mt-1">Disconnect Image</button>
                   </div>
-                  <input 
-                    type="checkbox" 
-                    checked={showLiveStats} 
-                    onChange={(e) => setShowLiveStats(e.target.checked)}
-                    className="w-5 h-5 accent-amber-500 rounded cursor-pointer"
-                  />
-                </div>
+                )}
               </div>
 
             </div>
@@ -560,33 +584,35 @@ export default function App() {
           {activeTab === 'history' && (
             <div className="space-y-4 text-xs animate-fadeIn">
               <div className="flex justify-between items-center">
-                <span className="font-bold tracking-wider uppercase text-slate-400">Stored Historical Diagnostic Sequences</span>
+                <span className="font-bold tracking-wider uppercase opacity-60">Stored Diagnostic Sequences</span>
                 {history.length > 0 && (
-                  <button onClick={clearMetricsLog} className="text-rose-500 font-bold hover:underline">Clear Local Datastack</button>
+                  <button onClick={clearMetricsLog} className="text-red-500 font-bold hover:underline">Clear Datastack</button>
                 )}
               </div>
               {history.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 italic">No verification records logged to disk array.</div>
+                <div className="text-center py-8 opacity-40 italic">No verifications logged.</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-400/20 text-slate-400 font-bold">
+                      <tr className={`border-b ${T.border} font-bold opacity-70`}>
                         <th className="py-2">NODE ID</th>
-                        <th>VELOCITY (WPM)</th>
+                        <th>WPM</th>
                         <th>ACCURACY</th>
-                        <th>MODE SEQUENCE</th>
-                        <th>TIME TIMESTAMP</th>
+                        <th>ERRORS</th>
+                        <th>MODE</th>
+                        <th>TIMESTAMP</th>
                       </tr>
                     </thead>
                     <tbody>
                       {history.map((log) => (
-                        <tr key={log.id} className="border-b border-slate-400/10 hover:bg-slate-500/5">
-                          <td className="py-2 text-slate-400 font-bold">{log.id}</td>
-                          <td className="text-amber-500 font-black text-sm">{log.wpm}</td>
-                          <td className="text-emerald-500 font-bold">{log.accuracy}%</td>
-                          <td className="text-slate-400">{log.mode}</td>
-                          <td className="text-slate-500">{log.date}</td>
+                        <tr key={log.id} className={`border-b ${T.border} hover:bg-black/5`}>
+                          <td className="py-2 opacity-60 font-bold">{log.id}</td>
+                          <td className="font-black text-sm">{log.wpm}</td>
+                          <td className="font-bold opacity-90">{log.accuracy}%</td>
+                          <td className="font-bold text-red-400">{log.errors}</td>
+                          <td className="opacity-60">{log.mode}</td>
+                          <td className="opacity-50">{log.date}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -597,134 +623,133 @@ export default function App() {
           )}
 
           {activeTab === 'credits' && (
-            <div className="text-xs space-y-3 leading-relaxed text-slate-400 font-sans">
-              <p className="font-bold uppercase tracking-widest text-slate-500">Dragon Inc. Core Engine Infrastructure Specifications</p>
-              <p>• Engineered flawlessly within decentralized React atomic functional environments using zero boilerplate footprint overhead models.</p>
-              <p>• Low-latency structural audio loop nodes synth real-time frequencies direct to client browser hardware layers without telemetry overhead lag.</p>
-              <p>• Built in perfect compatibility with dynamic Tailwind presentation matrices ensuring fluid design metrics.</p>
-              {checkTimelineReference() && <p className="text-hidden text-[0px]" />}
+            <div className="text-xs space-y-3 leading-relaxed opacity-70 font-sans">
+              <p className="font-bold uppercase tracking-widest opacity-100">Dragon Inc. Core Systems</p>
+              <p>• Ghost Engine V2 installed: Auto-corrects visual typos while silently recording true error metrics.</p>
+              <p>• Real-time API fetching dynamically pulls coherent quote vectors from external networks.</p>
+              <p>• Web Audio Synth API bypasses hardware latency for pure mechanical switch feedback.</p>
             </div>
           )}
 
           {activeTab === 'copyright' && (
-            <div className="text-xs text-center py-6 space-y-2">
-              <p className="font-bold tracking-widest uppercase text-slate-500">Dragon Inc. Ghost Typer Module System Execution Framework</p>
-              <p>© {new Date().getFullYear()} Dragon Inc. Cloud Architecture Systems. Secure multi-cluster production environments verify all operational keystrokes.</p>
+            <div className="text-xs text-center py-6 space-y-2 opacity-60">
+              <p className="font-bold tracking-widest uppercase">Dragon Inc. Ghost Typer Module</p>
+              <p>© {new Date().getFullYear()} All Rights Reserved. Protected by Multi-Cluster Networks.</p>
             </div>
           )}
         </div>
       )}
 
-      {/* 4. THE CORE ENGINE WORKSPACE INTERFACE */}
+      {/* 4. CORE ENGINE WORKSPACE */}
       <div className="w-full max-w-5xl flex flex-col justify-center flex-grow py-8 z-10">
         
-        {/* LARGE MONKEYTYPE BRANDING BANNER */}
         <header className={`text-center mb-10 transition-all duration-500 ${isTypingActive ? 'opacity-0 transform -translate-y-6' : 'opacity-100'}`}>
-          <div className="text-[10px] tracking-[0.4em] uppercase font-bold text-slate-400 mb-1">Operational Cluster Production Framework</div>
-          <h1 className={`text-5xl font-black tracking-tighter uppercase ${themeMode === 'bright' ? 'text-slate-900 drop-shadow-sm' : 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500'}`}>
+          <div className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-50 mb-1">Cluster Production Framework</div>
+          <h1 className={`text-5xl font-black tracking-tighter uppercase ${T.accent}`}>
             Dragon Typer
           </h1>
-          <div className={`h-[3px] w-36 mx-auto mt-4 rounded-full ${themeMode === 'bright' ? 'bg-amber-500' : 'bg-gradient-to-r from-cyan-500 to-indigo-500'}`} />
+          <div className={`h-[3px] w-36 mx-auto mt-4 rounded-full ${T.caret}`} />
         </header>
 
-        {/* ACTIVE MAIN SCREEN CONFIGURATOR MODULE */}
         {!isFinished ? (
           <main className="w-full flex flex-col items-center">
             
-            {/* LIVE DATA COUNTERS OVERLAY */}
-            <div className="w-full max-w-4xl flex gap-6 justify-between text-[11px] font-bold text-slate-400 mb-4 px-2 tracking-wider">
+            <div className="w-full max-w-4xl flex gap-6 justify-between text-[11px] font-bold opacity-60 mb-4 px-2 tracking-wider uppercase">
               <div className="flex gap-4">
                 {showLiveStats && startTime && (
                   <>
-                    <div>SPEED: <span className="text-amber-500 font-black">{getLiveWpm()} WPM</span></div>
-                    <div>PROGRESS: <span className="text-blue-500 font-bold">{Math.round((currentIndex / targetText.length) * 100)}%</span></div>
+                    <div>SPEED: <span className={`${T.accent} font-black`}>{getLiveWpm()} WPM</span></div>
+                    <div>PROGRESS: <span className="font-bold">{Math.round((currentIndex / targetText.length) * 100)}%</span></div>
                   </>
                 )}
               </div>
               {testMode === 'time' && (
-                <div className="text-sm font-black text-amber-500 bg-amber-500/10 px-3 py-1 rounded-lg">
-                  ⏳ {timeLeft}s remaining
+                <div className={`text-sm font-black ${T.accent} bg-black/10 px-3 py-1 rounded-lg`}>
+                  ⏳ {timeLeft}s
                 </div>
               )}
               {testMode === 'words' && (
-                <div className="text-sm font-black text-blue-500 bg-blue-500/10 px-3 py-1 rounded-lg">
-                  🔤 {currentIndex} / {targetText.length} index
+                <div className={`text-sm font-black ${T.accent} bg-black/10 px-3 py-1 rounded-lg`}>
+                  🔤 {currentIndex} / {targetText.length}
                 </div>
               )}
             </div>
 
-            {/* HIGH-BRIGHTNESS MINIMALIST MONKEYTYPE TYPING CONTAINER */}
-            <div className={`w-full text-left font-mono leading-relaxed tracking-wide transition-all ${textSize} max-w-4xl px-6 py-8 rounded-2xl border min-h-[200px] select-none ${themeMode === 'bright' ? 'bg-white border-slate-200 shadow-sm' : 'bg-[#111a2e]/40 border-blue-900/20'}`}>
+            <div className={`w-full text-left leading-relaxed tracking-wide transition-all ${textSize} max-w-4xl px-6 py-8 rounded-2xl border min-h-[200px] select-none ${T.panel} ${T.border}`}>
               
-              {/* RENDER STACK LOOP FOR CHARACTER CHARACTER FOREGROUND */}
+              {/* GHOST RENDER STACK: Typos auto-correct visually, rendering perfect input! */}
               {targetText.split('').map((char, i) => {
                 let charClass = "";
                 if (i < currentIndex) {
-                  // Text evaluation check rules
-                  if (rawInputBuffer[i] === char) {
-                    charClass = themeMode === 'bright' ? "text-slate-900 font-medium" : "text-[#f1f5f9] drop-shadow-[0_0_6px_rgba(255,255,255,0.2)]";
-                  } else {
-                    charClass = "text-rose-500 bg-rose-500/10 rounded-sm";
-                  }
+                  // Ghost engine enforces visual correctness
+                  charClass = `opacity-100 ${themeMode === 'bright' ? 'font-medium text-black' : 'text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]'}`;
                 } else {
-                  charClass = themeMode === 'bright' ? "text-slate-300" : "text-blue-900/50";
+                  charClass = "opacity-30";
                 }
 
                 const isCaretActive = i === currentIndex;
+                const caretRender = () => {
+                  if (!isCaretActive) return null;
+                  if (caretStyle === 'block') return <span className={`absolute left-0 top-0 h-full w-[1ch] opacity-40 animate-pulse ${T.caret}`} />;
+                  if (caretStyle === 'underline') return <span className={`absolute left-0 bottom-0 h-[3px] w-[1ch] animate-pulse ${T.caret}`} />;
+                  return <span className={`absolute -left-[1px] top-[10%] h-[80%] w-[2px] animate-pulse ${T.caret}`} />;
+                };
 
                 return (
                   <span key={i} className="relative">
-                    {isCaretActive && (
-                      <span className={`absolute -left-[1px] top-[10%] h-[80%] w-[2px] animate-pulse ${themeMode === 'bright' ? 'bg-amber-500' : 'bg-cyan-400'}`} />
-                    )}
-                    <span className={`${charClass} transition-all duration-100 font-mono`}>
-                      {char === " " && i < currentIndex && rawInputBuffer[i] !== " " ? "␣" : char}
+                    {caretRender()}
+                    <span className={`${charClass} transition-all duration-75`}>
+                      {char}
                     </span>
                   </span>
                 );
               })}
               
-              {/* TRAILING OVERFLOW CARET POSITION WRAPPER */}
               {currentIndex >= targetText.length && (
-                <span className={`inline-block w-2 h-5 animate-pulse ${themeMode === 'bright' ? 'bg-amber-500' : 'bg-cyan-400'}`} />
+                <span className={`inline-block w-2 h-5 animate-pulse ${T.caret}`} />
               )}
             </div>
 
-            <div className="text-[10px] text-slate-400 font-bold uppercase mt-4 tracking-widest animate-pulse">
-              💡 Tip: Press <kbd className="bg-slate-500/10 px-1 py-0.5 rounded text-slate-500">Esc</kbd> anytime to restart and reset system logs.
+            <div className="text-[10px] opacity-50 font-bold uppercase mt-6 tracking-widest animate-pulse">
+              💡 Press <kbd className="bg-black/20 px-1.5 py-0.5 rounded border border-white/10">Esc</kbd> to restart engine
             </div>
           </main>
         ) : (
-          /* 5. METRIC DASHBOARD COMPONENT WITH VECTOR SCALES */
-          <main className={`w-full max-w-4xl mx-auto border p-6 md:p-8 rounded-3xl shadow-2xl animate-scaleUp transition-colors duration-300 ${themeMode === 'bright' ? 'bg-white border-slate-200' : 'bg-[#111a2e]/60 border-blue-900/40 backdrop-blur-md'}`}>
+          <main className={`w-full max-w-4xl mx-auto border p-6 md:p-8 rounded-3xl shadow-2xl animate-scaleUp transition-colors duration-300 ${T.panel} ${T.border}`}>
             
-            <div className={`grid grid-cols-2 md:grid-cols-5 gap-4 text-center mb-8 border-b pb-8 ${themeMode === 'bright' ? 'border-slate-100' : 'border-blue-950'}`}>
-              <div className={`p-4 rounded-2xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/50 border-blue-950/50'}`}>
-                <div className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 font-bold">Net Speed</div>
-                <div className="text-5xl font-black text-amber-500">{finalWpm} <span className="text-xs font-bold text-slate-400">WPM</span></div>
+            <div className={`grid grid-cols-2 md:grid-cols-6 gap-4 text-center mb-8 border-b pb-8 ${T.border}`}>
+              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
+                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Speed</div>
+                <div className={`text-5xl font-black ${T.accent}`}>{finalWpm} <span className="text-xs font-bold opacity-50">WPM</span></div>
               </div>
-              <div className={`p-4 rounded-2xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/50 border-blue-950/50'}`}>
-                <div className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 font-bold">Accuracy</div>
-                <div className="text-5xl font-black text-emerald-500">{finalAccuracy}%</div>
+              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
+                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Accuracy</div>
+                <div className="text-5xl font-black">{finalAccuracy}%</div>
               </div>
-              <div className={`p-4 rounded-2xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/50 border-blue-950/50'}`}>
-                <div className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 font-bold">Raw Velocity</div>
-                <div className="text-5xl font-black text-slate-500">{rawWpmScore} <span className="text-xs font-normal">WPM</span></div>
+              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
+                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Raw Vol</div>
+                <div className="text-5xl font-black opacity-70">{rawWpmScore} <span className="text-xs font-normal">WPM</span></div>
               </div>
-              <div className={`p-4 rounded-2xl border ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/50 border-blue-950/50'}`}>
-                <div className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 font-bold">Consistency</div>
-                <div className="text-5xl font-black text-indigo-500">{consistencyScore}%</div>
+              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
+                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Consistency</div>
+                <div className="text-5xl font-black opacity-80">{consistencyScore}%</div>
               </div>
-              <div className={`p-4 rounded-2xl border col-span-2 md:col-span-1 ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/50 border-blue-950/50'}`}>
-                <div className="text-[10px] tracking-widest uppercase text-slate-400 mb-1 font-bold">Burst Cycle</div>
-                <div className="text-5xl font-black text-sky-500">{burstSpeed} <span className="text-xs font-normal">WPM</span></div>
+              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
+                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold flex items-center justify-center gap-1">
+                  True Errors
+                  <span className="text-[8px] bg-red-500/20 text-red-500 px-1 rounded">GHOST LOG</span>
+                </div>
+                <div className="text-5xl font-black text-red-400">{finalErrorsLog}</div>
+              </div>
+              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
+                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Burst</div>
+                <div className="text-5xl font-black opacity-90">{burstSpeed} <span className="text-xs font-normal">WPM</span></div>
               </div>
             </div>
 
-            {/* PERFORMANCE GRAPHING FRAMEWORK (DYNAMIC MULTIPRECISE SVG STRIPS) */}
             <div className="mb-8 animate-fadeIn">
-              <h4 className="text-xs tracking-widest uppercase text-slate-400 font-bold mb-3 text-left">📈 Structural Velocity Distribution Wave</h4>
-              <div className={`w-full h-40 rounded-2xl p-4 border flex items-end relative ${themeMode === 'bright' ? 'bg-slate-50 border-slate-200' : 'bg-[#0a0f1d]/80 border-blue-950'}`}>
+              <h4 className="text-xs tracking-widest uppercase opacity-60 font-bold mb-3 text-left">📈 Structural Velocity Distribution Wave</h4>
+              <div className={`w-full h-40 rounded-2xl p-4 border flex items-end relative bg-black/10 ${T.border}`}>
                 {wpmTimeline.length > 1 ? (
                   <svg className="w-full h-full" viewBox={`0 0 ${wpmTimeline.length - 1} 100`} preserveAspectRatio="none">
                     <path
@@ -734,19 +759,20 @@ export default function App() {
                         return `L ${idx} ${y}`;
                       }).join(' ')} L ${wpmTimeline.length - 1} 100 Z`}
                       fill="url(#dragon-gradient-fill)"
-                      stroke={themeMode === 'bright' ? "#f59e0b" : "#22d3ee"}
+                      stroke="currentColor"
                       strokeWidth="2"
+                      className={T.accent}
                     />
                     <defs>
                       <linearGradient id="dragon-gradient-fill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={themeMode === 'bright' ? "#f59e0b" : "#06b6d4"} stopOpacity="0.4"/>
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0"/>
+                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.3"/>
+                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.0"/>
                       </linearGradient>
                     </defs>
                   </svg>
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-[11px] text-slate-400 italic">
-                    Diagnostic waveform captured successfully. Processing sequence graph matrix...
+                  <div className="absolute inset-0 flex items-center justify-center text-[11px] opacity-40 italic">
+                    Graphing matrix calculating nodes...
                   </div>
                 )}
               </div>
@@ -754,17 +780,16 @@ export default function App() {
 
             <button 
               onClick={resetEngine}
-              className={`w-full text-white font-bold py-4 rounded-xl cursor-pointer shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-xs font-black tracking-widest uppercase ${themeMode === 'bright' ? 'bg-slate-800 hover:bg-slate-900 shadow-slate-300' : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500'}`}
+              className={`w-full text-white font-bold py-4 rounded-xl cursor-pointer shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-xs font-black tracking-widest uppercase bg-black/40 hover:bg-black/60 border ${T.border}`}
             >
-              Initialize Next Evaluation Loop Node [Enter / Esc]
+              Initialize Next Evaluation Loop [Enter / Esc]
             </button>
           </main>
         )}
       </div>
 
-      {/* 5. PERMANENT SYSTEM CONTROL ROW FOOTER */}
-      <footer className={`w-full text-center text-[9px] font-bold tracking-widest uppercase transition-all duration-500 z-10 ${isTypingActive ? 'opacity-0' : 'opacity-40'}`}>
-        DRAGON INCORPORATED // GHOST TYPER PLATFORM SYSTEM BUILD v4.11.0 PRO PROD // MULTI-CLUSTER TELEMETRY ACTIVE
+      <footer className={`w-full text-center text-[9px] font-bold tracking-widest uppercase transition-all duration-500 z-10 ${isTypingActive ? 'opacity-0' : 'opacity-30'}`}>
+        DRAGON INCORPORATED // GHOST TYPER V5.0 // MULTI-MODAL DEPLOYMENT
       </footer>
     </div>
   );
