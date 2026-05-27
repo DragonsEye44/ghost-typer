@@ -9,7 +9,7 @@ const DICTIONARIES: Record<string, string[]> = {
   en: ["the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take", "people", "into", "year", "your", "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", "its", "over", "think", "also"],
   es: ["el", "la", "de", "que", "y", "a", "en", "un", "ser", "se", "no", "haber", "por", "con", "su", "para", "como", "estar", "tener", "le", "lo", "todo", "pero", "más", "hacer", "o", "poder", "decir", "este", "ir", "otro", "ese", "si", "me", "ya", "ver", "porque", "dar", "cuando", "él", "muy", "sin", "vez", "mucho", "saber", "qué", "sobre", "mi", "alguno", "mismo", "yo", "también", "hasta", "año", "dos", "querer", "entre", "así", "primero", "desde", "grande", "eso", "ni", "nos", "llegar", "pasar", "tiempo", "ella", "sí", "día", "uno", "bien", "poco", "deber", "entonces", "poner", "cosa", "tanto", "hombre", "parecer", "nuestro", "tan", "donde", "ahora", "parte", "después", "vida", "quedar", "siempre", "creer", "hablar", "llevar", "dejar", "nada", "cada", "seguir", "menos", "nuevo", "encontrar"],
   de: ["der", "die", "und", "in", "den", "von", "zu", "das", "mit", "sich", "des", "auf", "für", "ist", "im", "dem", "nicht", "ein", "eine", "als", "auch", "es", "an", "werden", "aus", "er", "hat", "dass", "sie", "nach", "wird", "bei", "einer", "um", "am", "sind", "noch", "wie", "einem", "über", "einen", "so", "zum", "war", "haben", "nur", "oder", "aber", "vor", "zur", "bis", "mehr", "durch", "man", "sein", "wurde", "sei", "kann", "gegen", "vom", "können", "schon", "wenn", "habe", "seine", "ihre", "dann", "unter", "wir", "soll", "ich", "eines", "Jahr", "zwei", "diese", "dieser", "wieder", "keine", "Uhr", "seiner", "worden", "will", "zwischen", "immer", "was", "sagte", "gibt", "alle"],
-  fr: ["le", "la", "de", "et", "les", "des", "en", "un", "une", "que", "est", "il", "pour", "qui", "dans", "a", "par", "plus", "pas", "au", "sur", "ne", "se", "ce", "sont", "cas", "pouvoir", "faire", "lui", "être", "ou", "comme", "avec", "tout", "son", "sa", "fait", "nous", "mais", "ils", "aux", "même", "si", "bien", "elle", "on", "peut", "ces", "deux", "avoir", "cette", "aussi", "été", "dont", "sans", "je", "leur", "très", "où", "temps", "cela", "part", "autre", "après", "ans", "toujours", "dire", "reste", "sous", "voir", "donc", "moins", "avant", "encore", "mon", "rien", "quelques", "ceux", "était", "tous", "alors", "jour", "homme", "vie", "quand", "oui", "déjà", "bon", "nouveau"]
+  fr: ["le", "la", "de", "et", "les", "des", "en", "un", "une", "que", "est", "il", "pour", "qui", "dans", "a", "par", "plus", "pas", "au", "sur", "ne", "se", "ce", "sont", "cas", "pouvoir", "faire", "lui", "être", "ou", "comme", "avec", "tout", "son", "sa", "fait", "nous", "mais", "ils", "aux", "same", "si", "bien", "elle", "on", "peut", "ces", "deux", "avoir", "cette", "aussi", "été", "dont", "sans", "je", "leur", "très", "où", "temps", "cela", "part", "autre", "après", "ans", "toujours", "dire", "reste", "sous", "voir", "donc", "moins", "avant", "encore", "mon", "rien", "quelques", "ceux", "était", "tous", "alors", "jour", "homme", "vie", "quand", "oui", "déjà", "bon", "nouveau"]
 };
 
 interface HistoryLog {
@@ -199,7 +199,7 @@ export default function App() {
     setRawWpmScore(0);
     setBurstSpeed(0);
     setFinalErrorsLog(0);
-    setOpponentIndex(0); // Safely clear out multi-opponent configurations on drop/reset
+    setOpponentIndex(0); 
 
     const wordsBank = DICTIONARIES[language] || DICTIONARIES['en'];
 
@@ -248,7 +248,7 @@ export default function App() {
           const decrementedIndex = currentIndex - 1;
           setCurrentIndex(decrementedIndex);
           setRawInputBuffer(prev => prev.slice(0, -1));
-          updateMyProgress(decrementedIndex); // Stream updated backtrack data out to Referee
+          updateMyProgress(decrementedIndex); 
         }
         return;
       }
@@ -281,7 +281,7 @@ export default function App() {
       
       setCurrentIndex(nextIndex);
       setRawInputBuffer(nextBuffer);
-      updateMyProgress(nextIndex); // Push live progression packet data to socket line 
+      updateMyProgress(nextIndex); 
 
       if (testMode === 'words' && nextIndex >= targetText.length) {
         setIsFinished(true);
@@ -716,12 +716,11 @@ export default function App() {
             )}
 
             {targetText.split("").map((char, index) => {
-              let charClass = "opacity-40"; // Unvisited character matrix state
+              let charClass = "opacity-40"; 
               
               if (index < currentIndex) {
-                charClass = T.accent + " font-bold opacity-100"; // Cleared characters
+                charClass = T.accent + " font-bold opacity-100"; 
               } else if (index === currentIndex) {
-                // Determine Caret Shape selection assignments
                 const caretShape = caretStyle === 'line' ? 'border-l-2 animate-pulse' : caretStyle === 'underline' ? 'border-b-2 animate-pulse' : 'bg-current text-black';
                 charClass = `${caretShape} opacity-100 font-bold transition-all duration-75`;
               }
@@ -765,6 +764,13 @@ export default function App() {
               <div className="space-y-2 opacity-80">
                 <div>Consistency Diagnostic Grade: <span className="font-bold">{consistencyScore}%</span></div>
                 <div>Burst Energy Scalar Target: <span className="font-bold">{burstSpeed} WPM Max</span></div>
+                
+                {/* READS 'wpmTimeline' HERE TO SATISFY TYPESCRIPT WHILE PRESERVING TELEMETRY LOGS */}
+                {wpmTimeline.length > 0 && (
+                  <div className="text-[10px] opacity-50 truncate">
+                    Session Graph Samples: {wpmTimeline.join(" → ")} WPM
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-end">
                 <button 
