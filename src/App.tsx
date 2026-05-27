@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// --- SYSTEM WORD BANKS & TELEMETRY DICTIONARIES (SIMPLE VOCABULARY) ---
+// --- SYSTEM WORD BANKS & TELEMETRY DICTIONARIES ---
 const DICTIONARIES: Record<string, string[]> = {
   en: ["the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take", "people", "into", "year", "your", "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", "its", "over", "think", "also"],
   es: ["el", "la", "de", "que", "y", "a", "en", "un", "ser", "se", "no", "haber", "por", "con", "su", "para", "como", "estar", "tener", "le", "lo", "todo", "pero", "más", "hacer", "o", "poder", "decir", "este", "ir", "otro", "ese", "si", "me", "ya", "ver", "porque", "dar", "cuando", "él", "muy", "sin", "vez", "mucho", "saber", "qué", "sobre", "mi", "alguno", "mismo", "yo", "también", "hasta", "año", "dos", "querer", "entre", "así", "primero", "desde", "grande", "eso", "ni", "nos", "llegar", "pasar", "tiempo", "ella", "sí", "día", "uno", "bien", "poco", "deber", "entonces", "poner", "cosa", "tanto", "hombre", "parecer", "nuestro", "tan", "donde", "ahora", "parte", "después", "vida", "quedar", "siempre", "creer", "hablar", "llevar", "dejar", "nada", "cada", "seguir", "menos", "nuevo", "encontrar"],
@@ -109,14 +109,12 @@ export default function App() {
     };
   }, [startTime, isFinished, currentIndex, isTypingActive]);
 
-  // --- METRICS CALCULATION METHOD (UPDATED FOR GHOST ENGINE) ---
+  // --- METRICS CALCULATION METHOD ---
   const calculateComprehensiveMetrics = useCallback((overrideEndTime?: number) => {
     if (!startTime) return;
     const finalTime = overrideEndTime || Date.now();
     const totalMinutes = (finalTime - startTime) / 1000 / 60;
     
-    // In Ghost Mode, rawInputBuffer is always identical to the target text for length.
-    // So we use the actual length typed and subtract the hidden mistakes to find real correct keystrokes.
     const totalTypedLength = rawInputBuffer.length;
     const realCorrectChars = Math.max(0, totalTypedLength - actualMistakes);
 
@@ -161,7 +159,6 @@ export default function App() {
     try {
       const res = await fetch('https://dummyjson.com/quotes/random');
       const data = await res.json();
-      // Clean quote to simple lowercase letters and spaces
       return data.quote.toLowerCase().replace(/[^a-z\s]/g, '').trim();
     } catch (e) {
       return "the system failed to connect to the internet so this fallback simple english phrase was deployed instead";
@@ -214,7 +211,7 @@ export default function App() {
     resetEngine();
   }, [resetEngine, testMode, timeLimit, wordLimit, language, textSource]);
 
-  // --- KEYBOARD CAPTURE HOOK (WITH GHOST AUTO-CORRECT ENGINE) ---
+  // --- KEYBOARD CAPTURE HOOK ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -243,9 +240,8 @@ export default function App() {
       const targetChar = targetText[currentIndex];
       const isActuallyCorrect = e.key === targetChar;
 
-      // Play sound before processing logical mask
       if (soundProfile !== 'none') {
-        simulateAudioFeedback(true); // Always sounds correct in Ghost Mode!
+        simulateAudioFeedback(true);
       }
 
       if (!startTime) {
@@ -253,13 +249,10 @@ export default function App() {
       }
 
       if (!isActuallyCorrect) {
-        setActualMistakes(prev => prev + 1); // Log the error silently
+        setActualMistakes(prev => prev + 1);
       }
 
-      // GHOST ENGINE: We force the output string to accept the CORRECT target character
-      // creating an illusion of perfect typing, while tracking the error behind the scenes.
       const ghostForcedChar = targetChar;
-
       const nextIndex = currentIndex + 1;
       const nextBuffer = rawInputBuffer + ghostForcedChar;
       
@@ -284,7 +277,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, startTime, isFinished, activeTab, soundProfile, targetText, rawInputBuffer, testMode, language, textSource, calculateComprehensiveMetrics, resetEngine]);
 
-  // --- AUDIO SYNTHESIZER SIMULATOR (FIXED) ---
+  // --- AUDIO SYNTHESIZER SIMULATOR ---
   const initAudioCtx = () => {
     if (!audioCtxRef.current) {
       const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
@@ -295,7 +288,7 @@ export default function App() {
     }
   };
 
-  const simulateAudioFeedback = (isCorrect: boolean, overrideProfile?: string) => {
+  const simulateAudioFeedback = (_isCorrect: boolean, overrideProfile?: string) => {
     initAudioCtx();
     const ctx = audioCtxRef.current;
     if (!ctx) return;
@@ -362,7 +355,6 @@ export default function App() {
     setHistory([]);
   };
 
-  // --- THEME ENGINE STYLING DICTIONARY ---
   const getThemeClasses = () => {
     switch(themeMode) {
       case 'bright': return { bg: 'bg-[#f8fafc]', text: 'text-[#334155]', border: 'border-slate-200', panel: 'bg-white', accent: 'text-amber-500', caret: 'bg-amber-500' };
@@ -377,7 +369,6 @@ export default function App() {
   return (
     <div className={`relative min-h-screen ${fontFamily} flex flex-col items-center justify-between p-6 select-none overflow-x-hidden transition-colors duration-300 ${T.bg} ${T.text}`}>
       
-      {/* 1. DYNAMIC BACKGROUND IMAGE ENGINE */}
       {bgImage && (
         <div 
           className="absolute inset-0 pointer-events-none transition-all duration-300"
@@ -385,7 +376,6 @@ export default function App() {
         />
       )}
 
-      {/* 2. TOP HEADS UP SYSTEM CONTROL BANNER */}
       <nav className={`w-full max-w-5xl flex flex-col md:flex-row gap-4 justify-between items-center text-xs tracking-widest uppercase transition-all duration-500 z-10 ${isTypingActive ? 'opacity-0 transform -translate-y-4 pointer-events-none' : 'opacity-100'}`}>
         <div className={`flex flex-wrap gap-4 border-b pb-2 ${T.border}`}>
           {['settings', 'history', 'credits', 'copyright'].map((tab) => (
@@ -417,7 +407,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* 3. DYNAMIC CONFIGURATION CONTROL SUBPANELS */}
       {activeTab !== 'none' && !isTypingActive && (
         <div className={`w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-20 mt-4 max-h-[70vh] overflow-y-auto transition-all duration-300 ${T.panel} ${T.border}`}>
           <div className={`flex justify-between items-center mb-4 border-b pb-2 ${T.border}`}>
@@ -428,7 +417,6 @@ export default function App() {
           {activeTab === 'settings' && (
             <div className="space-y-6 text-xs">
               
-              {/* TEXT SOURCE AND LANGUAGE GRID */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                   <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🌍 Text Generation Source</span>
@@ -461,7 +449,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* TEST MODE EVALUATION */}
               <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                 <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🎯 Operational Test Mode</span>
                 <div className="grid grid-cols-3 gap-2 mb-4">
@@ -512,7 +499,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* AESTHETICS & AUDIO GRID */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                   <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🔊 Acoustic Synth Driver (Click to Preview)</span>
@@ -555,8 +541,37 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>📏 Text Geometry Scalar Matrix</span>
+                  <div className="flex gap-2">
+                    {(['text-xl', 'text-2xl', 'text-3xl'] as const).map((size) => (
+                      <button 
+                        key={size}
+                        onClick={() => setTextSize(size)}
+                        className={`flex-1 py-2 rounded-lg font-bold border ${textSize === size ? 'bg-black/20 ' + T.accent + ' ' + T.border : 'bg-transparent opacity-50 border-transparent'}`}
+                      >
+                        {size === 'text-xl' ? 'Compact' : size === 'text-2xl' ? 'Standard' : 'Magnified'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={`p-4 rounded-xl border flex items-center justify-between bg-black/5 ${T.border}`}>
+                  <div>
+                    <span className={`block font-black uppercase tracking-wider ${T.accent}`}>📊 Heads Up Realtime Diagnostics</span>
+                    <span className="text-[10px] opacity-40">Stream evaluations fluidly across standard terminal buffers</span>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={showLiveStats} 
+                    onChange={(e) => setShowLiveStats(e.target.checked)}
+                    className="w-5 h-5 accent-current rounded cursor-pointer"
+                  />
+                </div>
+              </div>
               
-              {/* BACKGROUND PIPELINE */}
               <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                 <label className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🖼️ Wallpaper Matrix Injector</label>
                 <input 
@@ -640,7 +655,6 @@ export default function App() {
         </div>
       )}
 
-      {/* 4. CORE ENGINE WORKSPACE */}
       <div className="w-full max-w-5xl flex flex-col justify-center flex-grow py-8 z-10">
         
         <header className={`text-center mb-10 transition-all duration-500 ${isTypingActive ? 'opacity-0 transform -translate-y-6' : 'opacity-100'}`}>
@@ -677,11 +691,9 @@ export default function App() {
 
             <div className={`w-full text-left leading-relaxed tracking-wide transition-all ${textSize} max-w-4xl px-6 py-8 rounded-2xl border min-h-[200px] select-none ${T.panel} ${T.border}`}>
               
-              {/* GHOST RENDER STACK: Typos auto-correct visually, rendering perfect input! */}
               {targetText.split('').map((char, i) => {
                 let charClass = "";
                 if (i < currentIndex) {
-                  // Ghost engine enforces visual correctness
                   charClass = `opacity-100 ${themeMode === 'bright' ? 'font-medium text-black' : 'text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]'}`;
                 } else {
                   charClass = "opacity-30";
