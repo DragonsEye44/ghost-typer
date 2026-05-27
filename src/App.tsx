@@ -313,19 +313,6 @@ export default function App() {
     }
   };
 
-  // --- DYNAMIC CARET CLASSIFIER ---
-  const getCaretStyles = () => {
-    const color = themeMode === 'bright' ? 'border-amber-500 bg-amber-500/20 text-amber-600' : 'border-cyan-400 bg-cyan-500/20 text-cyan-400';
-    switch (caretStyle) {
-      case 'line':
-        return `border-l-2 ${themeMode === 'bright' ? 'border-amber-500 text-amber-600' : 'border-cyan-400 text-cyan-400'} animate-pulse bg-transparent pl-0.5`;
-      case 'underline':
-        return `border-b-2 ${themeMode === 'bright' ? 'border-amber-500 text-amber-600' : 'border-cyan-400 text-cyan-400'} bg-transparent px-0.5`;
-      default:
-        return `${color} border rounded-sm font-bold animate-pulse px-0.5`;
-    }
-  };
-
   // --- CALCULATE LIVE WPM FOR HUD ---
   const getLiveWpm = () => {
     if (!startTime) return 0;
@@ -420,7 +407,7 @@ export default function App() {
       {/* 3. DYNAMIC CONFIGURATION CONTROL SUBPANELS */}
       {activeTab !== 'none' && !isTypingActive && (
         <div className={`w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-20 mt-4 max-h-[70vh] overflow-y-auto transition-all duration-300 ${themeMode === 'bright' ? 'bg-white border-slate-200 text-slate-800' : 'bg-[#111a2e]/95 backdrop-blur-md border-blue-900/50 text-blue-100'}`}>
-          <div className={`flex justify-between items-center mb-4 border-b pb-2 ${themeMode === 'bright' ? 'border-slate-100' : 'border-blue-950'}`}>
+          <div className={`flex justify-between items-center mb-4 border-b pb-2 ${themeMode === 'bright' ? 'border-slate-100' : 'border-slate-100'}`}>
             <h3 className={`text-xs font-black uppercase tracking-widest ${themeMode === 'bright' ? 'text-amber-600' : 'text-cyan-400'}`}>{activeTab} array deployment console</h3>
             <button onClick={() => setActiveTab('none')} className="text-xs font-bold hover:underline cursor-pointer">✕ System Close</button>
           </div>
