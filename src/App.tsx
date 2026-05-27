@@ -204,7 +204,7 @@ export default function App() {
       }
     } else {
       setTimeLeft(0);
-      setTargetText(customInputText.trim() || "please insert your custom text into the configuration matrix");
+      setTargetText(customInputText.trim() || "please insert your custom text");
     }
   }, [testMode, timeLimit, wordLimit, customInputText, language, textSource]);
 
@@ -429,7 +429,7 @@ export default function App() {
       {activeTab !== 'none' && !isTypingActive && (
         <div className={`w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-20 mt-4 max-h-[70vh] overflow-y-auto transition-all duration-300 ${T.panel} ${T.border}`}>
           <div className={`flex justify-between items-center mb-4 border-b pb-2 ${T.border}`}>
-            <h3 className={`text-xs font-black uppercase tracking-widest ${T.accent}`}>{activeTab} Deployment Console</h3>
+            <h3 className={`text-xs font-black uppercase tracking-widest ${T.accent}`}>{activeTab} Tab</h3>
             <button onClick={() => setActiveTab('none')} className="text-xs font-bold hover:underline cursor-pointer">✕ Close</button>
           </div>
 
@@ -438,7 +438,7 @@ export default function App() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🌍 Text Generation Source</span>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🌍 Text Generation</span>
                   <div className="flex gap-2">
                     {['random', 'coherent', 'custom'].map((src) => (
                       <button
@@ -452,7 +452,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🗣️ Vocabulary Language Engine</span>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🗣️ Vocabulary Language</span>
                   <div className="flex gap-2">
                     {['en', 'es', 'de', 'fr'].map((lang) => (
                       <button
@@ -469,7 +469,7 @@ export default function App() {
               </div>
 
               <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🎯 Operational Test Mode</span>
+                <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🎯 Test Mode</span>
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   {(['time', 'words', 'custom'] as const).map((m) => (
                     <button
@@ -484,7 +484,7 @@ export default function App() {
 
                 {testMode === 'time' && textSource !== 'coherent' && (
                   <div>
-                    <span className="block opacity-60 font-bold uppercase mb-2">Duration Intervals (Seconds)</span>
+                    <span className="block opacity-60 font-bold uppercase mb-2">Duration (Seconds)</span>
                     <div className="flex gap-2">
                       {[15, 30, 60, 120].map((t) => (
                         <button key={t} onClick={() => setTimeLimit(t)} className={`flex-1 py-1.5 rounded font-bold border ${timeLimit === t ? 'bg-black/30' : 'bg-transparent opacity-50'}`}>{t}s</button>
@@ -495,7 +495,7 @@ export default function App() {
 
                 {testMode === 'words' && textSource !== 'coherent' && (
                   <div>
-                    <span className="block opacity-60 font-bold uppercase mb-2">Quantized Word Targets</span>
+                    <span className="block opacity-60 font-bold uppercase mb-2"> Word Targets</span>
                     <div className="flex gap-2">
                       {[10, 25, 50, 100].map((w) => (
                         <button key={w} onClick={() => setWordLimit(w)} className={`flex-1 py-1.5 rounded font-bold border ${wordLimit === w ? 'bg-black/30' : 'bg-transparent opacity-50'}`}>{w}</button>
@@ -506,7 +506,7 @@ export default function App() {
 
                 {textSource === 'custom' && (
                   <div className="space-y-2 mt-4">
-                    <span className="block opacity-60 font-bold uppercase">Insert Custom Payload Array</span>
+                    <span className="block opacity-60 font-bold uppercase">Insert Custom Text</span>
                     <textarea
                       value={customInputText}
                       onChange={(e) => setCustomInputText(e.target.value)}
@@ -520,7 +520,7 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🔊 Acoustic Synth Driver (Click to Preview)</span>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🔊 Typing Sound (Click to Preview)</span>
                   <div className="flex gap-2">
                     {['none', 'mx-brown', 'thock', 'clicky'].map((sound) => (
                       <button 
@@ -534,9 +534,9 @@ export default function App() {
                   </div>
                 </div>
               <div className={`p-4 rounded-xl border bg-black/5 ${T.border} flex flex-col justify-between`}>
-                  <span className={`block font-black uppercase tracking-wider ${T.accent}`}>🛠️ Typing Engine Assist</span>
+                  <span className={`block font-black uppercase tracking-wider ${T.accent}`}>🛠️ Typing Assist</span>
                   <div className="flex items-center justify-between mt-auto pt-2">
-                    <span className="text-[11px] uppercase font-bold opacity-70">Auto-Correct (Stop on Error)</span>
+                    <span className="text-[11px] uppercase font-bold opacity-70">Auto-Correct</span>
                     <input 
                       type="checkbox" 
                       checked={isAutocorrectEnabled} 
@@ -546,7 +546,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>⚡ Caret & Typography Core</span>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>⚡ Caret & Typography</span>
                   <div className="flex gap-2 mb-3">
                     {['font-mono', 'font-sans', 'font-serif'].map((font) => (
                       <button 
@@ -574,7 +574,7 @@ export default function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>📏 Text Geometry Scalar Matrix</span>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>📏 Text Scale</span>
                   <div className="flex gap-2">
                     {(['text-xl', 'text-2xl', 'text-3xl'] as const).map((size) => (
                       <button 
@@ -590,8 +590,8 @@ export default function App() {
 
                 <div className={`p-4 rounded-xl border flex items-center justify-between bg-black/5 ${T.border}`}>
                   <div>
-                    <span className={`block font-black uppercase tracking-wider ${T.accent}`}>📊 Heads Up Realtime Diagnostics</span>
-                    <span className="text-[10px] opacity-40">Stream evaluations fluidly across standard terminal buffers</span>
+                    <span className={`block font-black uppercase tracking-wider ${T.accent}`}>📊 Realtime Diagnostics</span>
+                    <span className="text-[10px] opacity-40"> fluid evaluation</span>
                   </div>
                   <input 
                     type="checkbox" 
@@ -603,7 +603,7 @@ export default function App() {
               </div>
               
               <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                <label className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🖼️ Wallpaper Matrix Injector</label>
+                <label className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🖼️ Wallpaper</label>
                 <input 
                   type="file" accept="image/*" onChange={handleLocalImageUpload}
                   className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-black/20 file:text-inherit hover:file:bg-black/40 cursor-pointer opacity-80"
@@ -629,7 +629,7 @@ export default function App() {
           {activeTab === 'history' && (
             <div className="space-y-4 text-xs animate-fadeIn">
               <div className="flex justify-between items-center">
-                <span className="font-bold tracking-wider uppercase opacity-60">Stored Diagnostic Sequences</span>
+                <span className="font-bold tracking-wider uppercase opacity-60">Stored Diagnostics</span>
                 {history.length > 0 && (
                   <button onClick={clearMetricsLog} className="text-red-500 font-bold hover:underline">Clear Datastack</button>
                 )}
@@ -669,8 +669,8 @@ export default function App() {
 
           {activeTab === 'credits' && (
             <div className="text-xs space-y-3 leading-relaxed opacity-70 font-sans">
-              <p className="font-bold uppercase tracking-widest opacity-100">Dragon Inc. Core Systems</p>
-              <p>• Ghost Engine V2 installed: Auto-corrects visual typos while silently recording true error metrics.</p>
+              <p className="font-bold uppercase tracking-widest opacity-100">Dragon Inc. Systems</p>
+              <p>• Ghost Engine V2 installed: Auto-corrects visual typos while silently recording true errors.</p>
               <p>• Real-time API fetching dynamically pulls coherent quote vectors from external networks.</p>
               <p>• Web Audio Synth API bypasses hardware latency for pure mechanical switch feedback.</p>
             </div>
@@ -688,9 +688,9 @@ export default function App() {
       <div className="w-full max-w-5xl flex flex-col justify-center flex-grow py-8 z-10">
         
         <header className={`text-center mb-10 transition-all duration-500 ${isTypingActive ? 'opacity-0 transform -translate-y-6' : 'opacity-100'}`}>
-          <div className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-50 mb-1">Cluster Production Framework</div>
+          <div className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-50 mb-1">Production Framework</div>
           <h1 className={`text-5xl font-black tracking-tighter uppercase ${T.accent}`}>
-            Dragon Typer
+            Ghost Typer
           </h1>
           <div className={`h-[3px] w-36 mx-auto mt-4 rounded-full ${T.caret}`} />
         </header>
@@ -793,7 +793,7 @@ export default function App() {
             </div>
 
             <div className="mb-8 animate-fadeIn">
-              <h4 className="text-xs tracking-widest uppercase opacity-60 font-bold mb-3 text-left">📈 Structural Velocity Distribution Wave</h4>
+              <h4 className="text-xs tracking-widest uppercase opacity-60 font-bold mb-3 text-left">📈 Velocity Distribution Wave</h4>
               <div className={`w-full h-40 rounded-2xl p-4 border flex items-end relative bg-black/10 ${T.border}`}>
                 {wpmTimeline.length > 1 ? (
                   <svg className="w-full h-full" viewBox={`0 0 ${wpmTimeline.length - 1} 100`} preserveAspectRatio="none">
@@ -817,7 +817,7 @@ export default function App() {
                   </svg>
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-[11px] opacity-40 italic">
-                    Graphing matrix calculating nodes...
+                    calculating...
                   </div>
                 )}
               </div>
@@ -827,14 +827,14 @@ export default function App() {
               onClick={resetEngine}
               className={`w-full text-white font-bold py-4 rounded-xl cursor-pointer shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-xs font-black tracking-widest uppercase bg-black/40 hover:bg-black/60 border ${T.border}`}
             >
-              Initialize Next Evaluation Loop [Enter / Esc]
+              Start New Test [Enter / Esc]
             </button>
           </main>
         )}
       </div>
 
       <footer className={`w-full text-center text-[9px] font-bold tracking-widest uppercase transition-all duration-500 z-10 ${isTypingActive ? 'opacity-0' : 'opacity-30'}`}>
-        DRAGON INCORPORATED // GHOST TYPER V5.0 // MULTI-MODAL DEPLOYMENT
+        GHOST TYPER V2 // ADVANCED TYPING SITE
       </footer>
     </div>
   );
