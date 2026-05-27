@@ -37,7 +37,6 @@ export default function App() {
   const [textSize, setTextSize] = useState<'text-xl' | 'text-2xl' | 'text-3xl'>('text-2xl');
   const [showLiveStats, setShowLiveStats] = useState<boolean>(true);
   const [fontFamily, setFontFamily] = useState<'font-mono' | 'font-sans' | 'font-serif'>('font-mono');
-  const [isAutocorrectEnabled, setIsAutocorrectEnabled] = useState<boolean>(false);
   
   // --- EXPANDED MULTI-MODAL LOGIC ---
   const [textSource, setTextSource] = useState<'random' | 'coherent' | 'custom'>('random');
@@ -241,7 +240,6 @@ export default function App() {
       const targetChar = targetText[currentIndex];
       const isActuallyCorrect = e.key === targetChar;
 
-      // HIER REINGERUTSCHT: Soundprofil (falls du es brauchst) & die fehlende Variable!
       if (soundProfile !== 'none') {
         simulateAudioFeedback(true);
       }
@@ -250,18 +248,16 @@ export default function App() {
         setStartTime(Date.now());
       }
 
-      // DIE RETTUNG: Hier definieren wir nextIndex, damit die Zeilen darunter funktionieren!
-      const nextIndex = currentIndex + 1;
-
       if (!isActuallyCorrect) {
         setActualMistakes(prev => prev + 1);
-        const charToRecord = isAutocorrectEnabled ? targetChar : e.key;
-        setCurrentIndex(nextIndex); 
-        setRawInputBuffer(prev => prev + charToRecord);
-      } else {
-        setCurrentIndex(nextIndex); 
-        setRawInputBuffer(prev => prev + e.key);
       }
+
+      const ghostForcedChar = targetChar;
+      const nextIndex = currentIndex + 1;
+      const nextBuffer = rawInputBuffer + ghostForcedChar;
+      
+      setCurrentIndex(nextIndex);
+      setRawInputBuffer(nextBuffer);
 
       if (testMode === 'words' && nextIndex >= targetText.length) {
         setIsFinished(true);
@@ -275,26 +271,11 @@ export default function App() {
         setIsTypingActive(false);
         setTimeout(() => calculateComprehensiveMetrics(Date.now()), 10);
       }
-
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    currentIndex, 
-    startTime, 
-    isFinished, 
-    activeTab, 
-    soundProfile, 
-    targetText, 
-    rawInputBuffer, 
-    testMode, 
-    language, 
-    textSource, 
-    calculateComprehensiveMetrics, 
-    resetEngine, 
-    isAutocorrectEnabled // Hier direkt mit reingepackt!
-  ]);
+  }, [currentIndex, startTime, isFinished, activeTab, soundProfile, targetText, rawInputBuffer, testMode, language, textSource, calculateComprehensiveMetrics, resetEngine]);
 
   // --- AUDIO SYNTHESIZER SIMULATOR ---
   const initAudioCtx = () => {
@@ -533,18 +514,7 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-              <div className={`p-4 rounded-xl border bg-black/5 ${T.border} flex flex-col justify-between`}>
-                  <span className={`block font-black uppercase tracking-wider ${T.accent}`}>🛠️ Typing Engine Assist</span>
-                  <div className="flex items-center justify-between mt-auto pt-2">
-                    <span className="text-[11px] uppercase font-bold opacity-70">Auto-Correct (Stop on Error)</span>
-                    <input 
-                      type="checkbox" 
-                      checked={isAutocorrectEnabled} 
-                      onChange={e => setIsAutocorrectEnabled(e.target.checked)} 
-                      className="w-4 h-4 cursor-pointer accent-white" 
-                    />
-                  </div>
-                </div>
+
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                   <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>⚡ Caret & Typography Core</span>
                   <div className="flex gap-2 mb-3">
@@ -722,14 +692,11 @@ export default function App() {
             <div className={`w-full text-left leading-relaxed tracking-wide transition-all ${textSize} max-w-4xl px-6 py-8 rounded-2xl border min-h-[200px] select-none ${T.panel} ${T.border}`}>
               
               {targetText.split('').map((char, i) => {
-                let charClass = "transition-all duration-75 ";
+                let charClass = "";
                 if (i < currentIndex) {
-                  const isMistake = rawInputBuffer[i] !== char;
-                  charClass += isMistake 
-                    ? "text-red-500 opacity-100" 
-                    : themeMode === 'bright' ? 'font-medium text-black opacity-100' : 'text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)] opacity-100';
+                  charClass = `opacity-100 ${themeMode === 'bright' ? 'font-medium text-black' : 'text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]'}`;
                 } else {
-                  charClass += "opacity-30";
+                  charClass = "opacity-30";
                 }
 
                 const isCaretActive = i === currentIndex;
