@@ -756,7 +756,7 @@ export default function App() {
             </div>
 
             <div className="text-[10px] opacity-50 font-bold uppercase mt-6 tracking-widest animate-pulse">
-              💡 Press <kbd className="bg-black/20 px-1.5 py-0.5 rounded border border-white/10">Esc</kbd> to restart engine
+              💡 Press <kbd className="bg-black/20 px-1.5 py-0.5 rounded border border-white/10">Esc</kbd> to restart
             </div>
           </main>
         ) : (
