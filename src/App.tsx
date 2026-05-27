@@ -14,7 +14,7 @@ const DICTIONARIES: Record<string, Record<'easy' | 'medium' | 'hard', string[]>>
   es: {
     easy: ["el", "la", "de", "que", "y", "a", "en", "un", "ser", "se", "no", "haber", "por", "con", "su", "para", "como", "estar", "tener", "le", "lo", "todo", "pero", "más", "hacer", "o", "poder", "decir", "este", "ir", "otro", "ese", "si", "me", "ya", "ver", "porque", "dar", "cuando", "él", "muy", "sin", "vez", "mucho", "saber", "qué", "sobre", "mi", "alguno", "mismo"],
     medium: ["configuracion", "infraestructura", "conexion", "telemetria", "algoritmo", "interfaz", "despliegue", "repositorio", "compilador", "variable", "funciones", "servidor", "autenticacion", "encriptacion", "optimizacion", "protocolo", "terminal", "computadora", "desarrollo", "arquitectura", "sincronizar", "rendimiento", "analitica", "matriz"],
-    hard: ["anacronico", "idiosincrasia", "yuxtaposicion", "quintaesencia", "efimero", "ofuscacion", "paradigmatico", "cacofonia", "recalcitrante", "solipsismo", "vicisitud", "perentorio", "ubicuidad", "magnanimo", "aquiescencia", "caprichoso", "nefario", "ostentoso", "sicofante", "amalgama", "esquizofrenico", "ventrilocuo"]
+    hard: ["anacronico", "idiosincrasia", "yuxtaposicion", "quintaesencia", "efimero", "ofuscacion", "paradigmatico", "cacofonia", "recalcitrante", "solipsismus", "vicisitud", "perentorio", "ubicuidad", "magnanimo", "aquiescencia", "caprichoso", "nefario", "ostentoso", "sicofante", "amalgama", "esquizofrenico", "ventrilocuo"]
   },
   de: {
     easy: ["der", "die", "und", "in", "den", "von", "zu", "das", "mit", "sich", "des", "auf", "für", "ist", "im", "dem", "nicht", "ein", "eine", "als", "auch", "es", "an", "werden", "aus", "er", "hat", "dass", "sie", "nach", "wird", "bei", "einer", "um", "am", "sind", "noch", "wie", "einem", "über", "einen", "so", "zum", "war", "haben", "nur", "oder"],
@@ -582,7 +582,7 @@ export default function App() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
                 {/* TYPOGRAPHY MODULE */}
                 <div className="p-2 rounded bg-black/5 border" style={{ borderColor: `${colorText}20` }}>
                   <span className="block mb-1 font-bold opacity-70">Font Matrix</span>
@@ -601,6 +601,30 @@ export default function App() {
                   <select value={soundProfile} onChange={(e) => setSoundProfile(e.target.value as any)} className="w-full bg-black/30 p-0.5 rounded text-xs outline-none">
                     {['none', 'mx-brown', 'thock', 'clicky'].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
+                </div>
+                {/* RESTORED: TEXT GEOMETRY SCALAR CONTROLLER */}
+                <div className="p-2 rounded bg-black/5 border" style={{ borderColor: `${colorText}20` }}>
+                  <span className="block mb-1 font-bold opacity-70">Text Size Scalar</span>
+                  <div className="flex gap-1">
+                    {(['text-lg', 'text-xl', 'text-2xl'] as const).map(s => (
+                      <button key={s} onClick={() => setTextSize(s)} className="flex-1 py-0.5 text-[10px] border rounded" style={{ borderColor: textSize === s ? colorAccent : 'transparent' }}>
+                        {s === 'text-lg' ? 'S' : s === 'text-xl' ? 'M' : 'L'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* RESTORED: HEADS UP STATISTICS PANEL TOGGLE */}
+                <div className="p-2 rounded bg-black/5 border flex items-center justify-between" style={{ borderColor: `${colorText}20` }}>
+                  <div>
+                    <span className="block font-bold opacity-70">Live HUD</span>
+                    <span className="text-[9px] opacity-40">Stats overlay</span>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={showLiveStats} 
+                    onChange={(e) => setShowLiveStats(e.target.checked)} 
+                    className="w-4 h-4 rounded cursor-pointer accent-current" 
+                  />
                 </div>
               </div>
 
@@ -693,7 +717,7 @@ export default function App() {
             )}
 
             {modifier === 'blind' && isTypingActive ? (
-              <div className="opacity-80 italic text-center text-sm py-6">Blind Modifier Enabled. Complete string execution from muscle memory memory...</div>
+              <div className="opacity-80 italic text-center text-sm py-6">Blind Modifier Enabled. Complete string execution from muscle memory...</div>
             ) : (
               targetText.split("").map((char, index) => {
                 let styleObj: React.CSSProperties = { opacity: 0.35 };
