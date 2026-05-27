@@ -1,3 +1,5 @@
+// Replace this with your specific Render URL
+const socket = io("https://ghost-typer-backend.onrender.com");
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 // --- SYSTEM WORD BANKS & TELEMETRY DICTIONARIES ---
@@ -37,6 +39,7 @@ export default function App() {
   const [textSize, setTextSize] = useState<'text-xl' | 'text-2xl' | 'text-3xl'>('text-2xl');
   const [showLiveStats, setShowLiveStats] = useState<boolean>(true);
   const [fontFamily, setFontFamily] = useState<'font-mono' | 'font-sans' | 'font-serif'>('font-mono');
+  const [opponentIndex, setOpponentIndex] = useState<number>(0);
   
   // --- EXPANDED MULTI-MODAL LOGIC ---
   const [textSource, setTextSource] = useState<'random' | 'coherent' | 'custom'>('random');
@@ -108,6 +111,19 @@ export default function App() {
       }
     };
   }, [startTime, isFinished, currentIndex, isTypingActive]);
+
+    // 1. Listen for the opponent
+  useEffect(() => {
+    socket.on("update-opponent", (index: number) => {
+      setOpponentIndex(index);
+    });
+    return () => { socket.off("update-opponent"); };
+  }, []);
+
+  // 2. Tell the server when you move (put this inside your handleKeyDown or key-typing logic)
+  const updateMyProgress = (newIndex: number) => {
+    socket.emit("typed", newIndex);
+  };
 
   // --- METRICS CALCULATION METHOD ---
   const calculateComprehensiveMetrics = useCallback((overrideEndTime?: number) => {
