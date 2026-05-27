@@ -1,6 +1,8 @@
-// Replace this with your specific Render URL
-const socket = io("https://ghost-typer-backend.onrender.com");
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { io } from "socket.io-client";
+
+// Initialize the socket once outside the component to prevent duplicate reconnection cycles
+const socket = io("https://ghost-typer-backend.onrender.com");
 
 // --- SYSTEM WORD BANKS & TELEMETRY DICTIONARIES ---
 const DICTIONARIES: Record<string, string[]> = {
@@ -64,6 +66,21 @@ export default function App() {
   const timelineInterval = useRef<any>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
+  // --- REALTIME MULTIPLAYER LISTENER CHANNEL ---
+  useEffect(() => {
+    socket.on("update-opponent", (index: number) => {
+      setOpponentIndex(index);
+    });
+    return () => { 
+      socket.off("update-opponent"); 
+    };
+  }, []);
+
+  // --- TELEMETRY SEND STREAM ENGINE ---
+  const updateMyProgress = (newIndex: number) => {
+    socket.emit("typed", newIndex);
+  };
+
   // --- PERSISTENT HISTORY LOADER ---
   useEffect(() => {
     const saved = localStorage.getItem('dragon_type_history_v5');
@@ -111,19 +128,6 @@ export default function App() {
       }
     };
   }, [startTime, isFinished, currentIndex, isTypingActive]);
-
-    // 1. Listen for the opponent
-  useEffect(() => {
-    socket.on("update-opponent", (index: number) => {
-      setOpponentIndex(index);
-    });
-    return () => { socket.off("update-opponent"); };
-  }, []);
-
-  // 2. Tell the server when you move (put this inside your handleKeyDown or key-typing logic)
-  const updateMyProgress = (newIndex: number) => {
-    socket.emit("typed", newIndex);
-  };
 
   // --- METRICS CALCULATION METHOD ---
   const calculateComprehensiveMetrics = useCallback((overrideEndTime?: number) => {
@@ -195,6 +199,7 @@ export default function App() {
     setRawWpmScore(0);
     setBurstSpeed(0);
     setFinalErrorsLog(0);
+    setOpponentIndex(0); // Safely clear out multi-opponent configurations on drop/reset
 
     const wordsBank = DICTIONARIES[language] || DICTIONARIES['en'];
 
@@ -240,8 +245,10 @@ export default function App() {
       if (e.key === 'Backspace') {
         e.preventDefault();
         if (currentIndex > 0) {
-          setCurrentIndex(prev => prev - 1);
+          const decrementedIndex = currentIndex - 1;
+          setCurrentIndex(decrementedIndex);
           setRawInputBuffer(prev => prev.slice(0, -1));
+          updateMyProgress(decrementedIndex); // Stream updated backtrack data out to Referee
         }
         return;
       }
@@ -274,6 +281,7 @@ export default function App() {
       
       setCurrentIndex(nextIndex);
       setRawInputBuffer(nextBuffer);
+      updateMyProgress(nextIndex); // Push live progression packet data to socket line 
 
       if (testMode === 'words' && nextIndex >= targetText.length) {
         setIsFinished(true);
@@ -405,6 +413,12 @@ export default function App() {
           ))}
         </div>
 
+        {/* Real-time Cloud Telemetry Status Panel */}
+        <div className="flex gap-4 items-center text-[11px] opacity-80">
+          <div>Your Char Array Pos: <span className={T.accent}>{currentIndex}</span></div>
+          <div>Opponent Index Pos: <span className="text-red-400">{opponentIndex}</span></div>
+        </div>
+
         <div className="flex items-center gap-3">
           <div className={`flex items-center rounded-lg p-1 border ${T.border} bg-black/10`}>
             {['bright', 'obsidian', 'neon', 'midnight'].map((tm) => (
@@ -432,7 +446,6 @@ export default function App() {
 
           {activeTab === 'settings' && (
             <div className="space-y-6 text-xs">
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                   <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🌍 Text Generation Source</span>
@@ -608,7 +621,6 @@ export default function App() {
                   </div>
                 )}
               </div>
-
             </div>
           )}
 
@@ -637,12 +649,12 @@ export default function App() {
                     </thead>
                     <tbody>
                       {history.map((log) => (
-                        <tr key={log.id} className={`border-b ${T.border} hover:bg-black/5`}>
-                          <td className="py-2 opacity-60 font-bold">{log.id}</td>
-                          <td className="font-black text-sm">{log.wpm}</td>
-                          <td className="font-bold opacity-90">{log.accuracy}%</td>
-                          <td className="font-bold text-red-400">{log.errors}</td>
-                          <td className="opacity-60">{log.mode}</td>
+                        <tr key={log.id} className={`border-b border-black/5 hover:bg-white/5`}>
+                          <td className="py-2 font-mono opacity-60">{log.id}</td>
+                          <td className={`font-black ${T.accent}`}>{log.wpm}</td>
+                          <td>{log.accuracy}%</td>
+                          <td className="text-red-400">{log.errors}</td>
+                          <td className="opacity-70">{log.mode}</td>
                           <td className="opacity-50">{log.date}</td>
                         </tr>
                       ))}
@@ -654,170 +666,121 @@ export default function App() {
           )}
 
           {activeTab === 'credits' && (
-            <div className="text-xs space-y-3 leading-relaxed opacity-70 font-sans">
-              <p className="font-bold uppercase tracking-widest opacity-100">Dragon Inc. Core Systems</p>
-              <p>• Ghost Engine V2 installed: Auto-corrects visual typos while silently recording true error metrics.</p>
-              <p>• Real-time API fetching dynamically pulls coherent quote vectors from external networks.</p>
-              <p>• Web Audio Synth API bypasses hardware latency for pure mechanical switch feedback.</p>
+            <div className="space-y-2 text-xs opacity-80 leading-relaxed">
+              <p className="font-bold uppercase tracking-wider">Ghost-Typer Architectural Specifications</p>
+              <p>• Engine Core Architecture: Reactive Functional Topology</p>
+              <p>• Async Clock Rate Frequency: Quantized 1000ms Timeline Arrays</p>
+              <p>• Multi-language Core Arrays: Embedded 80-Node JSON Blocks</p>
+              <p>• Distributed Networking Infrastructure: WebSockets via Render Cloud Frameworks</p>
             </div>
           )}
 
           {activeTab === 'copyright' && (
-            <div className="text-xs text-center py-6 space-y-2 opacity-60">
-              <p className="font-bold tracking-widest uppercase">Dragon Inc. Ghost Typer Module</p>
-              <p>© {new Date().getFullYear()} All Rights Reserved. Protected by Multi-Cluster Networks.</p>
+            <div className="space-y-2 text-xs opacity-60">
+              <p>© 2026 Ghost-Typer Terminal Operations. All Rights Reserved.</p>
+              <p>System tracking telemetry protocols are active. Unauthorized decompilation of terminal functions is restricted by digital safety architecture frameworks.</p>
             </div>
           )}
         </div>
       )}
 
-      <div className="w-full max-w-5xl flex flex-col justify-center flex-grow py-8 z-10">
+      {/* Main Core Typing Area Layout */}
+      <main className="w-full max-w-4xl flex-1 flex flex-col justify-center my-12 z-10">
         
-        <header className={`text-center mb-10 transition-all duration-500 ${isTypingActive ? 'opacity-0 transform -translate-y-6' : 'opacity-100'}`}>
-          <div className="text-[10px] tracking-[0.4em] uppercase font-bold opacity-50 mb-1">Cluster Production Framework</div>
-          <h1 className={`text-5xl font-black tracking-tighter uppercase ${T.accent}`}>
-            Dragon Typer
-          </h1>
-          <div className={`h-[3px] w-36 mx-auto mt-4 rounded-full ${T.caret}`} />
-        </header>
-
-        {!isFinished ? (
-          <main className="w-full flex flex-col items-center">
-            
-            <div className="w-full max-w-4xl flex gap-6 justify-between text-[11px] font-bold opacity-60 mb-4 px-2 tracking-wider uppercase">
-              <div className="flex gap-4">
-                {showLiveStats && startTime && (
-                  <>
-                    <div>SPEED: <span className={`${T.accent} font-black`}>{getLiveWpm()} WPM</span></div>
-                    <div>PROGRESS: <span className="font-bold">{Math.round((currentIndex / targetText.length) * 100)}%</span></div>
-                  </>
-                )}
-              </div>
-              {testMode === 'time' && (
-                <div className={`text-sm font-black ${T.accent} bg-black/10 px-3 py-1 rounded-lg`}>
-                  ⏳ {timeLeft}s
-                </div>
-              )}
-              {testMode === 'words' && (
-                <div className={`text-sm font-black ${T.accent} bg-black/10 px-3 py-1 rounded-lg`}>
-                  🔤 {currentIndex} / {targetText.length}
-                </div>
-              )}
-            </div>
-
-            <div className={`w-full text-left leading-relaxed tracking-wide transition-all ${textSize} max-w-4xl px-6 py-8 rounded-2xl border min-h-[200px] select-none ${T.panel} ${T.border}`}>
-              
-              {targetText.split('').map((char, i) => {
-                let charClass = "";
-                if (i < currentIndex) {
-                  charClass = `opacity-100 ${themeMode === 'bright' ? 'font-medium text-black' : 'text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]'}`;
-                } else {
-                  charClass = "opacity-30";
-                }
-
-                const isCaretActive = i === currentIndex;
-                const caretRender = () => {
-                  if (!isCaretActive) return null;
-                  if (caretStyle === 'block') return <span className={`absolute left-0 top-0 h-full w-[1ch] opacity-40 animate-pulse ${T.caret}`} />;
-                  if (caretStyle === 'underline') return <span className={`absolute left-0 bottom-0 h-[3px] w-[1ch] animate-pulse ${T.caret}`} />;
-                  return <span className={`absolute -left-[1px] top-[10%] h-[80%] w-[2px] animate-pulse ${T.caret}`} />;
-                };
-
-                return (
-                  <span key={i} className="relative">
-                    {caretRender()}
-                    <span className={`${charClass} transition-all duration-75`}>
-                      {char}
-                    </span>
-                  </span>
-                );
-              })}
-              
-              {currentIndex >= targetText.length && (
-                <span className={`inline-block w-2 h-5 animate-pulse ${T.caret}`} />
-              )}
-            </div>
-
-            <div className="text-[10px] opacity-50 font-bold uppercase mt-6 tracking-widest animate-pulse">
-              💡 Press <kbd className="bg-black/20 px-1.5 py-0.5 rounded border border-white/10">Esc</kbd> to restart engine
-            </div>
-          </main>
-        ) : (
-          <main className={`w-full max-w-4xl mx-auto border p-6 md:p-8 rounded-3xl shadow-2xl animate-scaleUp transition-colors duration-300 ${T.panel} ${T.border}`}>
-            
-            <div className={`grid grid-cols-2 md:grid-cols-6 gap-4 text-center mb-8 border-b pb-8 ${T.border}`}>
-              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
-                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Speed</div>
-                <div className={`text-5xl font-black ${T.accent}`}>{finalWpm} <span className="text-xs font-bold opacity-50">WPM</span></div>
-              </div>
-              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
-                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Accuracy</div>
-                <div className="text-5xl font-black">{finalAccuracy}%</div>
-              </div>
-              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
-                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Raw Vol</div>
-                <div className="text-5xl font-black opacity-70">{rawWpmScore} <span className="text-xs font-normal">WPM</span></div>
-              </div>
-              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
-                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Consistency</div>
-                <div className="text-5xl font-black opacity-80">{consistencyScore}%</div>
-              </div>
-              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
-                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold flex items-center justify-center gap-1">
-                  True Errors
-                  <span className="text-[8px] bg-red-500/20 text-red-500 px-1 rounded">GHOST LOG</span>
-                </div>
-                <div className="text-5xl font-black text-red-400">{finalErrorsLog}</div>
-              </div>
-              <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
-                <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Burst</div>
-                <div className="text-5xl font-black opacity-90">{burstSpeed} <span className="text-xs font-normal">WPM</span></div>
-              </div>
-            </div>
-
-            <div className="mb-8 animate-fadeIn">
-              <h4 className="text-xs tracking-widest uppercase opacity-60 font-bold mb-3 text-left">📈 Structural Velocity Distribution Wave</h4>
-              <div className={`w-full h-40 rounded-2xl p-4 border flex items-end relative bg-black/10 ${T.border}`}>
-                {wpmTimeline.length > 1 ? (
-                  <svg className="w-full h-full" viewBox={`0 0 ${wpmTimeline.length - 1} 100`} preserveAspectRatio="none">
-                    <path
-                      d={`M 0 100 ${wpmTimeline.map((val, idx) => {
-                        const maxVal = Math.max(...wpmTimeline, 80);
-                        const y = 100 - ((val / maxVal) * 80);
-                        return `L ${idx} ${y}`;
-                      }).join(' ')} L ${wpmTimeline.length - 1} 100 Z`}
-                      fill="url(#dragon-gradient-fill)"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className={T.accent}
-                    />
-                    <defs>
-                      <linearGradient id="dragon-gradient-fill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.3"/>
-                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.0"/>
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-[11px] opacity-40 italic">
-                    Graphing matrix calculating nodes...
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <button 
-              onClick={resetEngine}
-              className={`w-full text-white font-bold py-4 rounded-xl cursor-pointer shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-xs font-black tracking-widest uppercase bg-black/40 hover:bg-black/60 border ${T.border}`}
-            >
-              Initialize Next Evaluation Loop [Enter / Esc]
-            </button>
-          </main>
+        {/* Heads Up Realtime Live Stats Box */}
+        {showLiveStats && !isFinished && isTypingActive && (
+          <div className="flex gap-8 mb-6 text-xs font-mono uppercase tracking-widest opacity-60 animate-fadeIn">
+            {testMode === 'time' && (
+              <div>Time Remaining: <span className="font-bold">{timeLeft}s</span></div>
+            )}
+            <div>Live Speed Target: <span className="font-bold">{getLiveWpm()} WPM</span></div>
+            <div>Mistake Count: <span className="font-bold text-red-400">{actualMistakes}</span></div>
+          </div>
         )}
-      </div>
 
-      <footer className={`w-full text-center text-[9px] font-bold tracking-widest uppercase transition-all duration-500 z-10 ${isTypingActive ? 'opacity-0' : 'opacity-30'}`}>
-        DRAGON INCORPORATED // GHOST TYPER V5.0 // MULTI-MODAL DEPLOYMENT
+        {/* The Operational Typing Arena Grid */}
+        {!isFinished ? (
+          <div className={`relative leading-relaxed break-words tracking-wide focus:outline-none select-none transition-all duration-300 ${textSize}`}>
+            
+            {/* Visual Opponent Cursor Node Track Indicator */}
+            {opponentIndex > 0 && opponentIndex <= targetText.length && (
+              <span 
+                className="absolute text-[10px] font-bold px-1 rounded bg-red-500 text-white select-none pointer-events-none transition-all duration-150 animate-pulse shadow-sm"
+                style={{
+                  left: `${Math.min(95, (opponentIndex / targetText.length) * 100)}%`,
+                  top: '-20px'
+                }}
+              >
+                👻 Enemy
+              </span>
+            )}
+
+            {targetText.split("").map((char, index) => {
+              let charClass = "opacity-40"; // Unvisited character matrix state
+              
+              if (index < currentIndex) {
+                charClass = T.accent + " font-bold opacity-100"; // Cleared characters
+              } else if (index === currentIndex) {
+                // Determine Caret Shape selection assignments
+                const caretShape = caretStyle === 'line' ? 'border-l-2 animate-pulse' : caretStyle === 'underline' ? 'border-b-2 animate-pulse' : 'bg-current text-black';
+                charClass = `${caretShape} opacity-100 font-bold transition-all duration-75`;
+              }
+
+              return (
+                <span key={index} className={charClass}>
+                  {char}
+                </span>
+              );
+            })}
+          </div>
+        ) : (
+          
+          /* Analytics Evaluation Screen Display Module */
+          <div className={`p-8 border rounded-2xl shadow-2xl space-y-6 animate-scaleUp ${T.panel} ${T.border}`}>
+            <div className="border-b pb-4">
+              <h2 className={`text-xl font-black uppercase tracking-widest ${T.accent}`}>Performance Analysis Completed</h2>
+              <p className="text-xs opacity-50 font-mono">Telemetry node calculation logs updated successfully.</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div className="p-4 bg-black/10 rounded-xl border border-black/5">
+                <span className="block text-[10px] uppercase opacity-50 tracking-wider">Net Velocity</span>
+                <span className={`text-3xl font-black ${T.accent}`}>{finalWpm} <span className="text-xs">WPM</span></span>
+              </div>
+              <div className="p-4 bg-black/10 rounded-xl border border-black/5">
+                <span className="block text-[10px] uppercase opacity-50 tracking-wider">Precision Matrix</span>
+                <span className="text-3xl font-black">{finalAccuracy}%</span>
+              </div>
+              <div className="p-4 bg-black/10 rounded-xl border border-black/5">
+                <span className="block text-[10px] uppercase opacity-50 tracking-wider">Fault Metrics</span>
+                <span className="text-3xl font-black text-red-400">{finalErrorsLog}</span>
+              </div>
+              <div className="p-4 bg-black/10 rounded-xl border border-black/5">
+                <span className="block text-[10px] uppercase opacity-50 tracking-wider">Raw Burst Speed</span>
+                <span className="text-3xl font-black opacity-70">{rawWpmScore} <span className="text-xs">WPM</span></span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs">
+              <div className="space-y-2 opacity-80">
+                <div>Consistency Diagnostic Grade: <span className="font-bold">{consistencyScore}%</span></div>
+                <div>Burst Energy Scalar Target: <span className="font-bold">{burstSpeed} WPM Max</span></div>
+              </div>
+              <div className="flex items-center justify-end">
+                <button 
+                  onClick={resetEngine}
+                  className={`px-6 py-3 font-bold uppercase tracking-widest rounded-xl transition-all cursor-pointer border shadow-md bg-black/10 hover:bg-white/10 ${T.border}`}
+                >
+                  Initialize New Run [Esc]
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <footer className="w-full text-center text-[10px] tracking-widest uppercase opacity-40 z-10">
+        Ghost-Typer Core Engine System Buffer Connected • Port Stream Active
       </footer>
     </div>
   );
