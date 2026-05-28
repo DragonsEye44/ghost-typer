@@ -8,6 +8,44 @@ const DICTIONARIES: Record<string, string[]> = {
   fr: ["le", "la", "de", "et", "les", "des", "en", "un", "une", "que", "est", "il", "pour", "qui", "dans", "a", "par", "plus", "pas", "au", "sur", "ne", "se", "ce", "sont", "cas", "pouvoir", "faire", "lui", "être", "ou", "comme", "avec", "tout", "son", "sa", "fait", "nous", "mais", "ils", "aux", "même", "si", "bien", "elle", "on", "peut", "ces", "deux", "avoir", "cette", "aussi", "été", "dont", "sans", "je", "leur", "très", "où", "temps", "cela", "part", "autre", "après", "ans", "toujours", "dire", "reste", "sous", "voir", "donc", "moins", "avant", "encore", "mon", "rien", "quelques", "ceux", "était", "tous", "alors", "jour", "homme", "vie", "quand", "oui", "déjà", "bon", "nouveau"]
 };
 
+// --- COHERENT SENTENCE DATASTACK FOR MULTILINGUAL COMPLEXITY ---
+const COHERENT_BANKS: Record<string, string[]> = {
+  en: [
+    "the quick brown fox jumps over the lazy dog",
+    "success is not final failure is not fatal it is the courage to continue that counts",
+    "clear thinking requires courage rather than intelligence",
+    "quality means doing it right when no one is looking",
+    "simplicity is the ultimate sophistication of modern design and technology"
+  ],
+  es: [
+    "el conocimiento es poder y la sabiduria nos permite actuar con total libertad",
+    "la vida es lo que pasa mientras estas ocupado haciendo otros planes para el futuro",
+    "la unica forma de hacer un gran trabajo es amar lo que haces cada dia",
+    "el éxito consiste en vencer el temor a fracasar en tus objetivos principales"
+  ],
+  de: [
+    "die unendliche geschichte der menschheit ist voll von wunderbaren momenten und erfolgen",
+    "es ist nicht von bedeutung wie langsam du gehst solange du nicht stehen bleibst",
+    "wissen ist macht aber charakter ist die wahre staerke eines jeden menschen",
+    "die besten dinge im leben sind nicht die die man fuer geld kaufen kann"
+  ],
+  fr: [
+    "le secret du bonheur est la liberte et le secret de la liberte est le courage",
+    "la vie est un mystere quil faut vivre et non un probleme a resoudre chaque jour",
+    "le meilleur moyen de predire lavenir est de le creer de ses propres mains",
+    "tout est possible a celui qui croit en ses reves et travaille sans cesse"
+  ]
+};
+
+// --- REAL AUDIO SOUND PROFILES REGISTRY ---
+const SOUND_ASSETS: Record<string, string> = {
+  linear: "", 
+  tactile: "",
+  clicky: "",
+  thock: "",
+  creamy: ""
+};
+
 interface HistoryLog {
   id: string;
   wpm: number;
@@ -156,17 +194,6 @@ export default function App() {
     calculateComprehensiveMetrics();
   }, [calculateComprehensiveMetrics]);
 
-  // --- INTERNET API FETCH FOR COHERENT TEXT ---
-  const fetchCoherentQuote = async () => {
-    try {
-      const res = await fetch('https://dummyjson.com/quotes/random');
-      const data = await res.json();
-      return data.quote.toLowerCase().replace(/[^a-z\s]/g, '').trim();
-    } catch (e) {
-      return "the system failed to connect to the internet so this fallback simple english phrase was deployed instead";
-    }
-  };
-
   // --- RECOVERY RESET ROUTINE ---
   const resetEngine = useCallback(async () => {
     setCurrentIndex(0);
@@ -185,9 +212,17 @@ export default function App() {
     const wordsBank = DICTIONARIES[language] || DICTIONARIES['en'];
 
     if (textSource === 'coherent') {
-      setTargetText("connecting to internet database...");
-      const internetText = await fetchCoherentQuote();
-      setTargetText(internetText);
+      const phrases = COHERENT_BANKS[language] || COHERENT_BANKS['en'];
+      let cumulativeText = "";
+      const targetCount = testMode === 'words' ? wordLimit : 200;
+      
+      while (cumulativeText.split(" ").length < targetCount) {
+        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        cumulativeText += randomPhrase + " ";
+      }
+      
+      const refinedBlock = cumulativeText.trim().split(/\s+/).slice(0, targetCount).join(" ");
+      setTargetText(refinedBlock);
       setTimeLeft(testMode === 'time' ? timeLimit : 0);
     } else if (textSource === 'random') {
       if (testMode === 'time') {
@@ -243,7 +278,7 @@ export default function App() {
       const isActuallyCorrect = e.key === targetChar;
 
       if (soundProfile !== 'none') {
-        simulateAudioFeedback(true);
+        simulateAudioFeedback(isActuallyCorrect);
       }
 
       if (!startTime) {
@@ -269,7 +304,11 @@ export default function App() {
       } else if (testMode === 'time' && nextIndex >= targetText.length && textSource === 'random') {
         const wordsBank = DICTIONARIES[language];
         setTargetText(prev => prev + " " + wordsBank[Math.floor(Math.random() * wordsBank.length)]);
-      } else if ((testMode === 'custom' || textSource === 'coherent') && nextIndex >= targetText.length) {
+      } else if (testMode === 'time' && nextIndex >= targetText.length && textSource === 'coherent') {
+        const phrases = COHERENT_BANKS[language] || COHERENT_BANKS['en'];
+        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+        setTargetText(prev => prev + " " + randomPhrase);
+      } else if ((testMode === 'custom') && nextIndex >= targetText.length) {
         setIsFinished(true);
         setIsTypingActive(false);
         setTimeout(() => calculateComprehensiveMetrics(Date.now()), 10);
@@ -295,7 +334,7 @@ export default function App() {
     isAutocorrectEnabled
   ]);
 
-  // --- AUDIO SYNTHESIZER SIMULATOR ---
+  // --- AUDIO SYNTHESIZER & REAL FILE CONTROLLER ---
   const initAudioCtx = () => {
     if (!audioCtxRef.current) {
       const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
@@ -311,6 +350,13 @@ export default function App() {
     try {
       const currentProfile = overrideProfile || soundProfile;
       if (currentProfile === 'none') return;
+
+      if (SOUND_ASSETS[currentProfile]) {
+        const externalAudio = new Audio(SOUND_ASSETS[currentProfile]);
+        externalAudio.volume = isCorrect ? 0.6 : 0.3;
+        externalAudio.play().catch(() => console.log("Real audio playback skipped (check file resolution path)"));
+        return;
+      }
 
       const ctx = initAudioCtx();
       if (!ctx) return;
@@ -484,7 +530,7 @@ export default function App() {
       </nav>
 
       {activeTab !== 'none' && !isTypingActive && (
-        <div className={`absolute left-0 right-0 mx-auto w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-[9999] mt-4 max-h-[70vh] overflow-y-auto transition-all duration-300 ${T.panel} ${T.border}`}>
+        <div className={`absolute left-0 right-0 mx-auto w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-[9999] top-[75px] max-h-[70vh] overflow-y-auto transition-all duration-300 ${T.panel} ${T.border}`}>
           <div className={`flex justify-between items-center mb-4 border-b pb-2 ${T.border}`}>
             <h3 className={`text-xs font-black uppercase tracking-widest ${T.accent}`}>{activeTab} Tab</h3>
             <button onClick={() => setActiveTab('none')} className="text-xs font-bold hover:underline cursor-pointer">✕ Close</button>
@@ -518,7 +564,7 @@ export default function App() {
                       <button
                         key={lang}
                         onClick={() => setLanguage(lang as any)}
-                        disabled={textSource === 'coherent' || textSource === 'custom'}
+                        disabled={textSource === 'custom'}
                         className={`flex-1 py-2 rounded-lg font-bold uppercase tracking-widest border transition-all ${language === lang ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'} disabled:opacity-20 disabled:cursor-not-allowed`}
                       >
                         {lang}
@@ -572,7 +618,7 @@ export default function App() {
                       type="checkbox" 
                       checked={isAutocorrectEnabled} 
                       onChange={e => setIsAutocorrectEnabled(e.target.checked)} 
-                      className="w-4 h-4 cursor-pointer accent-white" 
+                      className="w-4 h-4 cursor-pointer accent-current" 
                     />
                   </div>
                 </div>
@@ -603,7 +649,7 @@ export default function App() {
                     type="checkbox" 
                     checked={showLiveStats} 
                     onChange={(e) => setShowLiveStats(e.target.checked)}
-                    className="w-5 h-5 accent-current rounded cursor-pointer"
+                    className="w-4 h-4 accent-current cursor-pointer"
                   />
                 </div>
               </div>
@@ -623,7 +669,7 @@ export default function App() {
                   ))}
                 </div>
 
-                {testMode === 'time' && textSource !== 'coherent' && (
+                {testMode === 'time' && (
                   <div>
                     <span className="block opacity-60 font-bold uppercase mb-2">Duration (Seconds)</span>
                     <div className="flex gap-2">
@@ -634,7 +680,7 @@ export default function App() {
                   </div>
                 )}
 
-                {testMode === 'words' && textSource !== 'coherent' && (
+                {testMode === 'words' && (
                   <div>
                     <span className="block opacity-60 font-bold uppercase mb-2"> Word Targets</span>
                     <div className="flex gap-2">
@@ -756,8 +802,8 @@ export default function App() {
             <div className="text-xs space-y-3 leading-relaxed opacity-70 font-sans">
               <p className="font-bold uppercase tracking-widest opacity-100">Dragon Inc. Systems</p>
               <p>• Ghost Engine V2 installed: Auto-corrects visual typos while silently recording true errors.</p>
-              <p>• Real-time API fetching dynamically pulls coherent quote vectors from external networks.</p>
-              <p>• Web Audio Synth API bypasses hardware latency for pure mechanical switch feedback.</p>
+              <p>• Real-time synthesis structures now cleanly generate multilingual coherent contextual modules.</p>
+              <p>• Web Audio Synth API bypasses hardware latency with custom external static link channels.</p>
             </div>
           )}
 
@@ -797,7 +843,7 @@ export default function App() {
                   ⏳ {timeLeft}s
                 </div>
               )}
-              {testMode === 'words' && (
+              {(testMode === 'words' || textSource === 'coherent') && (
                 <div className={`text-sm font-black ${T.accent} bg-black/10 px-3 py-1 rounded-lg`}>
                   🔤 {currentIndex} / {targetText.length}
                 </div>
@@ -881,15 +927,22 @@ export default function App() {
               </div>
               <div className={`p-4 rounded-2xl border bg-black/10 ${T.border}`}>
                 <div className="text-[10px] tracking-widest uppercase opacity-60 mb-1 font-bold">Burst</div>
-                <div className="text-5xl font-black opacity-90">{burstSpeed} <span className="text-xs font-normal">WPM</span></div>
+                <div className={`text-5xl font-black ${T.accent}`}>{burstSpeed} <span className="text-xs font-normal">WPM</span></div>
               </div>
             </div>
 
             <div className="mb-8 animate-fadeIn">
               <h4 className="text-xs tracking-widest uppercase opacity-60 font-bold mb-3 text-left">📈 Velocity Distribution Wave</h4>
-              <div className={`w-full h-40 rounded-2xl p-4 border flex items-end relative bg-black/10 ${T.border}`}>
+              <div className={`w-full h-40 rounded-2xl p-4 border relative bg-black/10 ${T.border}`}>
                 {wpmTimeline.length > 0 ? (
-                  <svg className="w-full h-full overflow-visible" viewBox="0 0 500 100" preserveAspectRatio="none">
+                  <svg className={`w-full h-full overflow-visible ${T.accent}`} viewBox="0 0 500 100" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="dragon-gradient-fill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.3"/>
+                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.0"/>
+                      </linearGradient>
+                    </defs>
+
                     {[25, 50, 75].map((yVal) => (
                       <line key={yVal} x1="0" y1={yVal} x2="500" y2={yVal} stroke="currentColor" strokeOpacity="0.05" strokeDasharray="3,3" />
                     ))}
@@ -902,7 +955,6 @@ export default function App() {
                         return `L ${x} ${y}`;
                       }).join(' ')} L 500 100 Z`}
                       fill="url(#dragon-gradient-fill)"
-                      className={`${T.accent} opacity-10`}
                     />
 
                     <path
@@ -916,14 +968,7 @@ export default function App() {
                       stroke="currentColor"
                       strokeWidth="2"
                       vectorEffect="non-scaling-stroke"
-                      className={T.accent}
                     />
-                    <defs>
-                      <linearGradient id="dragon-gradient-fill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.3"/>
-                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.0"/>
-                      </linearGradient>
-                    </defs>
                   </svg>
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-[11px] opacity-40 italic">
