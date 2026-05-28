@@ -33,11 +33,12 @@ export default function App() {
   const [bgOpacity, setBgOpacity] = useState<number>(30);
   const [bgBlur, setBgBlur] = useState<number>(4);
   const [caretStyle, setCaretStyle] = useState<'block' | 'line' | 'underline'>('block');
-  const [soundProfile, setSoundProfile] = useState<'none' | 'mx-brown' | 'thock' | 'clicky'>('mx-brown');
+  const [soundProfile, setSoundProfile] = useState<'none' | 'linear' | 'tactile' | 'clicky' | 'thock' | 'creamy'>('linear');
   const [textSize, setTextSize] = useState<'text-xl' | 'text-2xl' | 'text-3xl'>('text-2xl');
   const [showLiveStats, setShowLiveStats] = useState<boolean>(true);
   const [fontFamily, setFontFamily] = useState<'font-mono' | 'font-sans' | 'font-serif'>('font-mono');
   const [isAutocorrectEnabled, setIsAutocorrectEnabled] = useState<boolean>(false);
+  const [errorStyle, setErrorStyle] = useState<'color' | 'underline' | 'both'>('both');
   
   // --- EXPANDED MULTI-MODAL LOGIC ---
   const [textSource, setTextSource] = useState<'random' | 'coherent' | 'custom'>('random');
@@ -241,7 +242,6 @@ export default function App() {
       const targetChar = targetText[currentIndex];
       const isActuallyCorrect = e.key === targetChar;
 
-      // HIER REINGERUTSCHT: Soundprofil (falls du es brauchst) & die fehlende Variable!
       if (soundProfile !== 'none') {
         simulateAudioFeedback(true);
       }
@@ -250,7 +250,6 @@ export default function App() {
         setStartTime(Date.now());
       }
 
-      // DIE RETTUNG: Hier definieren wir nextIndex, damit die Zeilen darunter funktionieren!
       const nextIndex = currentIndex + 1;
 
       if (!isActuallyCorrect) {
@@ -293,7 +292,7 @@ export default function App() {
     textSource, 
     calculateComprehensiveMetrics, 
     resetEngine, 
-    isAutocorrectEnabled // Hier direkt mit reingepackt!
+    isAutocorrectEnabled
   ]);
 
   // --- AUDIO SYNTHESIZER SIMULATOR ---
@@ -305,49 +304,107 @@ export default function App() {
     if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
     }
+    return audioCtxRef.current;
   };
 
-  const simulateAudioFeedback = (_isCorrect: boolean, overrideProfile?: string) => {
-    initAudioCtx();
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-
-    const profile = overrideProfile || soundProfile;
-    if (profile === 'none') return;
-
+  const simulateAudioFeedback = (isCorrect: boolean, overrideProfile?: string) => {
     try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const currentProfile = overrideProfile || soundProfile;
+      if (currentProfile === 'none') return;
+
+      const ctx = initAudioCtx();
+      if (!ctx) return;
       
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      
+      osc.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(ctx.destination);
 
       const now = ctx.currentTime;
 
-      if (profile === 'mx-brown') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-      } else if (profile === 'thock') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(150, now);
-        osc.frequency.exponentialRampToValueAtTime(50, now + 0.08);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-      } else if (profile === 'clicky') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(800, now);
-        osc.frequency.exponentialRampToValueAtTime(300, now + 0.03);
-        gain.gain.setValueAtTime(0.05, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+      if (!isCorrect) {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(110, now);
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(300, now);
+        gainNode.gain.setValueAtTime(0.12, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+        return;
+      }
+
+      switch (currentProfile) {
+        case 'clicky':
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(2100, now);
+          filter.type = 'highpass';
+          filter.frequency.setValueAtTime(1200, now);
+          gainNode.gain.setValueAtTime(0.04, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+          break;
+
+        case 'thock':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(88, now);
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(160, now);
+          gainNode.gain.setValueAtTime(0.4, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          break;
+
+        case 'creamy':
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(175, now);
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(380, now);
+          gainNode.gain.setValueAtTime(0.28, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          break;
+
+        case 'tactile':
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(290, now);
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(450, now);
+          gainNode.gain.setValueAtTime(0.18, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+          
+          setTimeout(() => {
+            try {
+              if (!audioCtxRef.current) return;
+              const osc2 = audioCtxRef.current.createOscillator();
+              const gain2 = audioCtxRef.current.createGain();
+              osc2.connect(gain2);
+              gain2.connect(audioCtxRef.current.destination);
+              osc2.type = 'sine';
+              osc2.frequency.setValueAtTime(130, audioCtxRef.current.currentTime);
+              gain2.gain.setValueAtTime(0.1, audioCtxRef.current.currentTime);
+              gain2.gain.exponentialRampToValueAtTime(0.001, audioCtxRef.current.currentTime + 0.03);
+              osc2.start();
+              osc2.stop(audioCtxRef.current.currentTime + 0.03);
+            } catch(e){}
+          }, 12);
+          break;
+
+        case 'linear':
+        default:
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(240, now);
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(700, now);
+          gainNode.gain.setValueAtTime(0.15, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+          break;
       }
 
       osc.start(now);
       osc.stop(now + 0.1);
-    } catch (err) {
-      console.error("Audio block bypassed");
+    } catch (e) {
+      console.error("Audio engine execution fallback", e);
     }
   };
 
@@ -427,7 +484,7 @@ export default function App() {
       </nav>
 
       {activeTab !== 'none' && !isTypingActive && (
-        <div className={`w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-20 mt-4 max-h-[70vh] overflow-y-auto transition-all duration-300 ${T.panel} ${T.border}`}>
+        <div className={`absolute left-0 right-0 mx-auto w-full max-w-4xl border p-6 rounded-2xl shadow-2xl z-[9999] mt-4 max-h-[70vh] overflow-y-auto transition-all duration-300 ${T.panel} ${T.border}`}>
           <div className={`flex justify-between items-center mb-4 border-b pb-2 ${T.border}`}>
             <h3 className={`text-xs font-black uppercase tracking-widest ${T.accent}`}>{activeTab} Tab</h3>
             <button onClick={() => setActiveTab('none')} className="text-xs font-bold hover:underline cursor-pointer">✕ Close</button>
@@ -437,6 +494,7 @@ export default function App() {
             <div className="space-y-6 text-xs">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 🌍 Text Generation */}
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                   <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🌍 Text Generation</span>
                   <div className="flex gap-2">
@@ -451,6 +509,8 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+
+                {/* 🗣️ Vocabulary Language */}
                 <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                   <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🗣️ Vocabulary Language</span>
                   <div className="flex gap-2">
@@ -466,8 +526,89 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+
+                {/* ❌ Error Marking Style */}
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>❌ Error Marking Style</span>
+                  <div className="flex gap-2">
+                    {[
+                      { id: 'color', label: 'Color Only' },
+                      { id: 'underline', label: 'Underline Only' },
+                      { id: 'both', label: 'Both' }
+                    ].map((style) => (
+                      <button
+                        key={style.id}
+                        onClick={() => setErrorStyle(style.id as any)}
+                        className={`flex-1 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider border transition-all ${errorStyle === style.id ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
+                      >
+                        {style.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 🔊 Typing Sound */}
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🔊 Typing Sound (Click to Preview)</span>
+                  <div className="flex gap-2">
+                    {['none', 'linear', 'tactile', 'clicky', 'thock', 'creamy'].map((sound) => (
+                      <button 
+                        key={sound}
+                        onClick={() => { setSoundProfile(sound as any); simulateAudioFeedback(true, sound); }}
+                        className={`flex-1 py-2 rounded-lg uppercase text-[10px] font-bold border transition-all ${soundProfile === sound ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
+                      >
+                        {sound.replace('-', ' ')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 🛠️ Typing Assist */}
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border} flex flex-col justify-between`}>
+                  <span className={`block font-black uppercase tracking-wider ${T.accent}`}>🛠️ Typing Assist</span>
+                  <div className="flex items-center justify-between mt-auto pt-2">
+                    <span className="text-[11px] uppercase font-bold opacity-70">Auto-Correct</span>
+                    <input 
+                      type="checkbox" 
+                      checked={isAutocorrectEnabled} 
+                      onChange={e => setIsAutocorrectEnabled(e.target.checked)} 
+                      className="w-4 h-4 cursor-pointer accent-white" 
+                    />
+                  </div>
+                </div>
+
+                {/* 📏 Text Scale */}
+                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>📏 Text Scale</span>
+                  <div className="flex gap-2">
+                    {(['text-xl', 'text-2xl', 'text-3xl'] as const).map((size) => (
+                      <button 
+                        key={size}
+                        onClick={() => setTextSize(size)}
+                        className={`flex-1 py-2 rounded-lg font-bold border ${textSize === size ? 'bg-black/20 ' + T.accent + ' ' + T.border : 'bg-transparent opacity-50 border-transparent'}`}
+                      >
+                        {size === 'text-xl' ? 'Compact' : size === 'text-2xl' ? 'Standard' : 'Magnified'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 📊 Realtime Diagnostics */}
+                <div className={`p-4 rounded-xl border flex items-center justify-between bg-black/5 ${T.border}`}>
+                  <div>
+                    <span className={`block font-black uppercase tracking-wider ${T.accent}`}>📊 Realtime Diagnostics</span>
+                    <span className="text-[10px] opacity-40"> fluid evaluation</span>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={showLiveStats} 
+                    onChange={(e) => setShowLiveStats(e.target.checked)}
+                    className="w-5 h-5 accent-current rounded cursor-pointer"
+                  />
+                </div>
               </div>
 
+              {/* 🎯 Test Mode */}
               <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                 <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🎯 Test Mode</span>
                 <div className="grid grid-cols-3 gap-2 mb-4">
@@ -518,90 +659,34 @@ export default function App() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🔊 Typing Sound (Click to Preview)</span>
-                  <div className="flex gap-2">
-                    {['none', 'mx-brown', 'thock', 'clicky'].map((sound) => (
-                      <button 
-                        key={sound}
-                        onClick={() => { setSoundProfile(sound as any); simulateAudioFeedback(true, sound); }}
-                        className={`flex-1 py-2 rounded-lg uppercase text-[10px] font-bold border transition-all ${soundProfile === sound ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
-                      >
-                        {sound.replace('-', ' ')}
-                      </button>
-                    ))}
-                  </div>
+              {/* ⚡ Caret & Typography */}
+              <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
+                <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>⚡ Caret & Typography</span>
+                <div className="flex gap-2 mb-3">
+                  {['font-mono', 'font-sans', 'font-serif'].map((font) => (
+                    <button 
+                      key={font}
+                      onClick={() => setFontFamily(font as any)}
+                      className={`flex-1 py-1.5 rounded-lg border font-bold ${font} ${fontFamily === font ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
+                    >
+                      {font.replace('font-', '')}
+                    </button>
+                  ))}
                 </div>
-              <div className={`p-4 rounded-xl border bg-black/5 ${T.border} flex flex-col justify-between`}>
-                  <span className={`block font-black uppercase tracking-wider ${T.accent}`}>🛠️ Typing Assist</span>
-                  <div className="flex items-center justify-between mt-auto pt-2">
-                    <span className="text-[11px] uppercase font-bold opacity-70">Auto-Correct</span>
-                    <input 
-                      type="checkbox" 
-                      checked={isAutocorrectEnabled} 
-                      onChange={e => setIsAutocorrectEnabled(e.target.checked)} 
-                      className="w-4 h-4 cursor-pointer accent-white" 
-                    />
-                  </div>
-                </div>
-                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>⚡ Caret & Typography</span>
-                  <div className="flex gap-2 mb-3">
-                    {['font-mono', 'font-sans', 'font-serif'].map((font) => (
-                      <button 
-                        key={font}
-                        onClick={() => setFontFamily(font as any)}
-                        className={`flex-1 py-1.5 rounded-lg border font-bold ${font} ${fontFamily === font ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
-                      >
-                        {font.replace('font-', '')}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    {['block', 'line', 'underline'].map((style) => (
-                      <button 
-                        key={style}
-                        onClick={() => setCaretStyle(style as any)}
-                        className={`flex-1 py-1.5 rounded-lg border font-bold ${caretStyle === style ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
-                      >
-                        {style}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
-                  <span className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>📏 Text Scale</span>
-                  <div className="flex gap-2">
-                    {(['text-xl', 'text-2xl', 'text-3xl'] as const).map((size) => (
-                      <button 
-                        key={size}
-                        onClick={() => setTextSize(size)}
-                        className={`flex-1 py-2 rounded-lg font-bold border ${textSize === size ? 'bg-black/20 ' + T.accent + ' ' + T.border : 'bg-transparent opacity-50 border-transparent'}`}
-                      >
-                        {size === 'text-xl' ? 'Compact' : size === 'text-2xl' ? 'Standard' : 'Magnified'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={`p-4 rounded-xl border flex items-center justify-between bg-black/5 ${T.border}`}>
-                  <div>
-                    <span className={`block font-black uppercase tracking-wider ${T.accent}`}>📊 Realtime Diagnostics</span>
-                    <span className="text-[10px] opacity-40"> fluid evaluation</span>
-                  </div>
-                  <input 
-                    type="checkbox" 
-                    checked={showLiveStats} 
-                    onChange={(e) => setShowLiveStats(e.target.checked)}
-                    className="w-5 h-5 accent-current rounded cursor-pointer"
-                  />
+                <div className="flex gap-2">
+                  {['block', 'line', 'underline'].map((style) => (
+                    <button 
+                      key={style}
+                      onClick={() => setCaretStyle(style as any)}
+                      className={`flex-1 py-1.5 rounded-lg border font-bold ${caretStyle === style ? `bg-black/20 ${T.accent} ${T.border}` : 'bg-transparent opacity-50 border-transparent'}`}
+                    >
+                      {style}
+                    </button>
+                  ))}
                 </div>
               </div>
               
+              {/* 🖼️ Wallpaper */}
               <div className={`p-4 rounded-xl border bg-black/5 ${T.border}`}>
                 <label className={`block font-black uppercase mb-3 tracking-wider ${T.accent}`}>🖼️ Wallpaper</label>
                 <input 
@@ -721,13 +806,21 @@ export default function App() {
 
             <div className={`w-full text-left leading-relaxed tracking-wide transition-all ${textSize} max-w-4xl px-6 py-8 rounded-2xl border min-h-[200px] select-none ${T.panel} ${T.border}`}>
               
-              {targetText.split('').map((char, i) => {
+              {targetText.split('').map((char: string, i: number) => {
                 let charClass = "transition-all duration-75 ";
                 if (i < currentIndex) {
                   const isMistake = rawInputBuffer[i] !== char;
-                  charClass += isMistake 
-                    ? "text-red-500 opacity-100" 
-                    : themeMode === 'bright' ? 'font-medium text-black opacity-100' : 'text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)] opacity-100';
+                  if (isMistake) {
+                    if (errorStyle === 'color') {
+                      charClass += "text-red-500 opacity-100";
+                    } else if (errorStyle === 'underline') {
+                      charClass += "underline decoration-red-500 decoration-2 underline-offset-4 opacity-100";
+                    } else {
+                      charClass += "text-red-500 underline decoration-red-500 decoration-2 underline-offset-4 opacity-100";
+                    }
+                  } else {
+                    charClass += themeMode === 'bright' ? 'font-medium text-black opacity-100' : 'text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)] opacity-100';
+                  }
                 } else {
                   charClass += "opacity-30";
                 }
@@ -795,17 +888,34 @@ export default function App() {
             <div className="mb-8 animate-fadeIn">
               <h4 className="text-xs tracking-widest uppercase opacity-60 font-bold mb-3 text-left">📈 Velocity Distribution Wave</h4>
               <div className={`w-full h-40 rounded-2xl p-4 border flex items-end relative bg-black/10 ${T.border}`}>
-                {wpmTimeline.length > 1 ? (
-                  <svg className="w-full h-full" viewBox={`0 0 ${wpmTimeline.length - 1} 100`} preserveAspectRatio="none">
+                {wpmTimeline.length > 0 ? (
+                  <svg className="w-full h-full overflow-visible" viewBox="0 0 500 100" preserveAspectRatio="none">
+                    {[25, 50, 75].map((yVal) => (
+                      <line key={yVal} x1="0" y1={yVal} x2="500" y2={yVal} stroke="currentColor" strokeOpacity="0.05" strokeDasharray="3,3" />
+                    ))}
+                    
                     <path
-                      d={`M 0 100 ${wpmTimeline.map((val, idx) => {
-                        const maxVal = Math.max(...wpmTimeline, 80);
-                        const y = 100 - ((val / maxVal) * 80);
-                        return `L ${idx} ${y}`;
-                      }).join(' ')} L ${wpmTimeline.length - 1} 100 Z`}
+                      d={`M 0 100 ${wpmTimeline.map((val: number, idx: number) => {
+                        const x = (idx / (wpmTimeline.length - 1 || 1)) * 500;
+                        const maxVal = Math.max(...wpmTimeline, 60);
+                        const y = 90 - (val / maxVal) * 80;
+                        return `L ${x} ${y}`;
+                      }).join(' ')} L 500 100 Z`}
                       fill="url(#dragon-gradient-fill)"
+                      className={`${T.accent} opacity-10`}
+                    />
+
+                    <path
+                      d={wpmTimeline.map((val: number, idx: number) => {
+                        const x = (idx / (wpmTimeline.length - 1 || 1)) * 500;
+                        const maxVal = Math.max(...wpmTimeline, 60);
+                        const y = 90 - (val / maxVal) * 80;
+                        return `${idx === 0 ? 'M' : 'L'} ${x} ${y}`;
+                      }).join(' ')}
+                      fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
+                      vectorEffect="non-scaling-stroke"
                       className={T.accent}
                     />
                     <defs>
